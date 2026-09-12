@@ -1,0 +1,72 @@
+{
+  "title": "发现更多精彩视频 - 抖音搜索",
+  "url": "https://www.douyin.com/search/%E7%9F%AD%E8%A7%86%E9%A2%91%E4%BB%A3%E8%BF%90%E8%90%A5",
+  "bodyText": "开启读屏标签\n读屏标签已关闭\n精选\n推荐\nAI抖音\n关注\n朋友\n我的\n直播\n放映厅\n短剧\n下载抖音精选\n2026 © 抖音\n京ICP备16016397号-3\n京公网安备11010802050006号\n电子营业执照\n信息网络传播视听节目许可证 0126733\n广播电视节目制作经营许可证 （京）字第11313号\n增值电信业务经营许可证 京B2-20170846\n网络文化经营许可证 京网文〔2025〕0181-061号\n互联网宗教信息服务许可证 京（2025）0000017\n药品医疗器械网络信息服务备案 （京）网药械信息备字（2023）第00570号\n互联网新闻信息服务许可证 11220230001\n（京）人服证字〔2026〕第0600005023号\n网络谣言曝光台\n网上有害信息举报\n违法和不良信息举报 400-140-2108 feedback@douyin.com\n算法推荐专项举报 sfjubao@bytedance.com\n体育饭圈专项举报 tyfq@bytedance.com\n广告投放\n用户服务协议\n隐私政策\n账号找回\n联系我们\n加入我们\n友情链接\n站点地图\n下载抖音\n抖音电商\n搜索\n\n充值\n\n客户端\n\n壁纸\n\n通知\n\n消息\n\n投稿\n\n登录\n\n综合\n视频\n用户\n直播\n多列\n单列\n筛选\n登录后即可搜索更多精彩视频\n扫码登录\n如何扫码\n\n打开「抖音APP」点击左上角\n\n扫一扫\n\n验证码登录\n密码登录\n获取验证码\n登录\n登录即代表同意用户协议和隐私政策",
+  "docHeight": 910,
+  "overlays": [
+    {
+      "tag": "DIV",
+      "id": "",
+      "class": "ezAK2PYX vNSfRbBQ",
+      "zIndex": 9999,
+      "text": "登录后即可搜索更多精彩视频扫码登录如何扫码打开「抖音APP」点击左上角扫一扫验证码登录密码登录获取验"
+    },
+    {
+      "tag": "A",
+      "id": "",
+      "class": "hY8lWHgA r_GN44pD RWVm2Z14 ALink-a",
+      "zIndex": 502,
+      "text": ""
+    },
+    {
+      "tag": "DIV",
+      "id": "douyin-header",
+      "class": "EexPxRCK KbS5u1xJ dfc9ncoC ShNAV5iJ mJKDQtcu",
+      "zIndex": 502,
+      "text": "搜索充值客户端壁纸通知消息投稿登录"
+    },
+    {
+      "tag": "DIV",
+      "id": "",
+      "class": "Rr56zkD1",
+      "zIndex": 502,
+      "text": "搜索充值客户端壁纸通知消息投稿登录"
+    },
+    {
+      "tag": "DIV",
+      "id": "douyin-sidebar",
+      "class": "Z1y1j8wq",
+      "zIndex": 500,
+      "text": ""
+    },
+    {
+      "tag": "DIV",
+      "id": "search-toolbar-container",
+      "class": "qWNh2IMg CRPlkYAk j7kc7ENz v3oVNkhd cPNUSGVc",
+      "zIndex": 200,
+      "text": "综合视频用户直播多列单列筛选"
+    }
+  ],
+  "captchaElements": [
+    {
+      "tag": "IFRAME",
+      "id": "nocaptcha-container",
+      "class": "",
+      "display": "none",
+      "visibility": "visible",
+      "opacity": "1",
+      "zIndex": "auto",
+      "width": 0,
+      "height": 0,
+      "visible": false
+    }
+  ],
+  "searchUI": [
+    {
+      "tag": "DIV",
+      "class": "tab-aisearch EoY455Q_ QQzJ6KOK undefined zipjTPpf",
+      "text": "AI抖音",
+      "visible": true
+    }
+  ]
+}
