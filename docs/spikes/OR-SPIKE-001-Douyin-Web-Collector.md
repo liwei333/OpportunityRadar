@@ -1,8 +1,10 @@
 # OR-SPIKE-001: Douyin Web Real Data Collector
 
-**Status: CONDITIONAL PASS**
+**Status: CONDITIONAL PASS → Updated after OR-SPIKE-001B**
 **Date: 2026-09-12**
 **Spike ID: OR-SPIKE-001**
+
+> **OR-SPIKE-001B Authenticated Search Validation** — see Section 14 below.
 
 ---
 
@@ -286,3 +288,138 @@ data/spikes/or-spike-001/
     ├── report.md                 (质量报告)
     └── report.json               (质量数据)
 ```
+
+---
+
+## 14. Authenticated Search Validation (OR-SPIKE-001B)
+
+### Environment
+
+| Item | Value |
+|------|-------|
+| Python | 3.12.13 |
+| Playwright | 1.48+ |
+| Chromium | 151.0.7922.34 |
+| OS | macOS 25.4.0 arm64 |
+| Mode | Headed (visible browser) |
+| Profile | data/browser_profile/douyin-spike-001 |
+
+### Login / Session Result
+
+| Test | Result |
+|------|--------|
+| First login prompt | ✅ Detected (inline overlay with "登录后即可搜索更多精彩视频") |
+| Captcha detection | ✅ Implemented (#captcha_container) |
+| Login overlay detection | ✅ Implemented (text-based + z-index overlay) |
+| Manual login wait | ✅ System correctly pauses and prompts user |
+| Session reuse | ⚠️ Not fully validated (requires human login) |
+
+### Key Finding: Search Page Login Overlay
+
+The search page (`/search/{query}`) shows a **z-index 9999 overlay** with text "登录后即可搜索更多精彩视频" when the user is not authenticated. This overlay:
+
+1. Blocks ALL interaction with the page
+2. Contains login options: 扫码登录 / 验证码登录 / 密码登录
+3. Is NOT the same as the homepage login dialog (`login-full-panel`)
+4. Is NOT a captcha (`#captcha_container`)
+5. Requires **new detection logic** based on text content
+
+**Detection logic added:**
+```python
+# In extractors.py - check_login_required()
+body_text = await self._page.evaluate("() => document.body?.innerText || ''")
+if "登录后即可搜索更多精彩视频" in body_text:
+    return True
+```
+
+### Search Result Evidence
+
+During one diagnostic run (before captcha/rate-limiting), **18 real search results** rendered for query "短视频代运营":
+
+| # | Duration | Views | Title | Author | Date |
+|---|----------|-------|-------|--------|------|
+| 1 | 29:41 | 6489 | 代运营怎么和老板谈单#短视频创作 #代运营 | @靳兴的运营速成指南 | 2月15日 |
+| 2 | 00:59 | 1705 | 如果你做短视频是为了获客... | @i超｜商业ip | 6月27日 |
+| 3 | 01:13 | 9073 | 代运营本身就是一个可以赚快钱的职业 | @薛辉小清新 | 6月3日 |
+| 4 | 01:53 | 1.9万 | 做短视频最简单的方式#短视频创业 #代运营 #编导 | @薛辉小清新 | 6月17日 |
+| 5 | 08:51 | 1439 | 代运营0-100全流程 | @宝藏十一（编导培训） | 6月21日 |
+| ... | ... | ... | ... | ... | ... |
+
+**Relevance assessment**: All 18 results are directly relevant to "短视频代运营" (short video agency operations), confirming that Douyin search returns keyword-relevant results.
+
+### Search Result DOM Structure
+
+Search results use `div.search-result-card` elements with text format:
+```
+[duration][view_count][title] [@author] · [date]
+```
+
+Unlike feed cards, search cards do **NOT** have:
+- `href` attributes with `/video/` URLs
+- Video IDs in the DOM
+- Direct links to video pages
+
+Video metadata is extracted by parsing the text content of each card.
+
+### Per Query Statistics
+
+| Query | Results | Status |
+|-------|---------|--------|
+| 短视频代运营 | 18 (in diagnostic) | ⚠️ Intermittent rendering |
+
+### Known Limitations
+
+1. **Login requirement**: Search requires login. The overlay is correctly detected but requires human intervention.
+2. **Inconsistent rendering**: Search results sometimes render without login (first visit), sometimes require login (subsequent visits).
+3. **Rate limiting**: Repeated automated access triggers captcha (`#captcha_container`).
+4. **Video URL traceability**: Search cards don't contain `/video/` URLs. Video IDs are not in the DOM.
+5. **Session persistence**: Not validated due to inability to complete login during autonomous execution.
+
+### Code Changes for OR-SPIKE-001B
+
+1. **Added `collection_mode` and `source_page_url` fields** to data models for provenance tracking
+2. **Added captcha detection** (`#captcha_container`) and wait logic
+3. **Added search page login overlay detection** (text-based: "登录后即可搜索更多精彩视频")
+4. **Added search result card extraction** (`div.search-result-card` text parsing)
+5. **Added result load verification** with retry (scroll trigger, search re-submit)
+6. **Generated `review_search_relevance.csv`** with 18 samples for human review
+
+### Stability Result
+
+| Run | Mode | Results | Notes |
+|-----|------|---------|-------|
+| 1 | Search | 0 | Login overlay detected, wait timed out |
+| 2 | Search (diagnostic) | 18 | Results rendered before rate limiting |
+| 3 | Search | 0 | Login overlay detected |
+
+### Final Gate Decision
+
+**CONDITIONAL PASS** (unchanged)
+
+**Evidence:**
+1. ✅ Login overlay correctly detected and system pauses for human intervention
+2. ✅ Search results CAN render with keyword-relevant data (18 results captured)
+3. ✅ Data extraction format is parseable (search-result-card text)
+4. ✅ Provenance tracking implemented (collection_mode, source_page_url)
+5. ⚠️ Full login→search→extract flow not validated end-to-end (requires human login)
+6. ⚠️ Video URL traceability for search results is limited (no /video/ links in DOM)
+
+**Conditions for entering OR-SPIKE-0012:**
+- Customer #0001 must manually login and run search to validate end-to-end flow
+- Video URL traceability issue needs resolution (may need to click cards to get URLs, or accept limited traceability)
+- Rate limiting / captcha frequency needs assessment over multiple runs
+
+---
+
+## 15. Final Conclusion
+
+**OR-SPIKE-001: CONDITIONAL PASS**
+
+The Douyin Web Collector can:
+- ✅ Extract real, structured video data from the homepage feed (100% success, 100% URL traceable)
+- ✅ Detect login/verification/captcha requirements and pause for human intervention
+- ✅ Parse search result cards when they render
+- ⚠️ Search requires login (correctly detected but not autonomously completable)
+- ⚠️ Search result rendering is inconsistent (sometimes works, sometimes requires login)
+
+**Next step**: OR-SPIKE-001B validation with human login, then OR-SPIKE-0012 if successful.

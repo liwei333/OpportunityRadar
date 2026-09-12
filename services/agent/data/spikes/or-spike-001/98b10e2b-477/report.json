@@ -1,0 +1,23 @@
+{
+  "run_id": "18593131-4e57-493c-abb7-7d6eabba064c",
+  "run_started_at": "2026-09-12T14:14:48.550565",
+  "run_finished_at": "2026-09-12T06:16:58.094983",
+  "duration_seconds": 129.54,
+  "queries_requested": 1,
+  "queries_completed": 0,
+  "queries_failed": 1,
+  "raw_result_count": 0,
+  "unique_video_count": 0,
+  "unique_account_count": 0,
+  "duplicate_video_count": 0,
+  "duplicate_account_count": 0,
+  "extract_success_count": 0,
+  "extract_failure_count": 0,
+  "traceable_url_count": 0,
+  "missing_title_count": 0,
+  "missing_author_count": 0,
+  "per_query_result_count": {
+    "短视频代运营": 0
+  },
+  "errors": []
+}

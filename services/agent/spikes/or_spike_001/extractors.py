@@ -550,7 +550,8 @@ class DouyinExtractor:
         return list(accounts.values())
 
     async def check_login_required(self) -> bool:
-        """Check if the page is showing a login dialog."""
+        """Check if the page is showing a login dialog or overlay."""
+        # Check standard login dialog selectors
         for selector in DouyinSelectors.LOGIN_DIALOG:
             try:
                 element = await self._page.query_selector(selector)
@@ -558,6 +559,15 @@ class DouyinExtractor:
                     return True
             except Exception:
                 continue
+
+        # Check for search page login overlay (z-index 9999, text-based)
+        try:
+            body_text = await self._page.evaluate("() => document.body?.innerText || ''")
+            if "登录后即可搜索更多精彩视频" in body_text:
+                return True
+        except Exception:
+            pass
+
         return False
 
     async def check_verification_required(self) -> bool:
@@ -617,10 +627,10 @@ class DouyinExtractor:
         print("[!] Captcha wait timed out.")
         return False
 
-    async def wait_for_login(self, timeout_ms: int = 120000) -> bool:
+    async def wait_for_login(self, timeout_ms: int = 180000) -> bool:
         """Wait for user to complete login.
 
-        Prints a clear message and waits for the login dialog to disappear.
+        Prints a clear message and waits for the login dialog/overlay to disappear.
 
         Args:
             timeout_ms: Maximum time to wait in milliseconds.
@@ -636,14 +646,23 @@ class DouyinExtractor:
         print("=" * 60)
         print("Douyin requires login to access search results.")
         print("Please complete login in the browser window.")
+        print("(扫码登录 / 验证码登录 / 密码登录)")
         print(f"Waiting up to {timeout_ms // 1000} seconds...")
         print("=" * 60 + "\n")
 
         start = time.time()
         while (time.time() - start) * 1000 < timeout_ms:
-            if not await self.check_login_required() and not await self.check_verification_required():
-                print("[!] Login completed, continuing...")
-                return True
+            # Check if login overlay is gone AND results are loading
+            login_gone = not await self.check_login_required()
+            captcha_gone = not await self.check_captcha_required()
+
+            if login_gone and captcha_gone:
+                # Double check by looking for results or absence of login text
+                body_text = await self._page.evaluate("() => document.body?.innerText || ''")
+                if "登录后即可搜索更多精彩视频" not in body_text:
+                    print("[!] Login completed, continuing...")
+                    return True
+
             await asyncio.sleep(3)
 
         print("[!] Login wait timed out.")

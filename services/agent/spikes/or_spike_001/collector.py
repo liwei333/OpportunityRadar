@@ -13,6 +13,7 @@ Orchestrates the collection pipeline:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import uuid
@@ -270,10 +271,8 @@ class DouyinCollector:
             logger.warning("Search results did not load for query: %s", query)
             # Save diagnostic screenshot
             screenshot_path = self._run_dir / "screenshots" / f"no_results_{query[:10]}.png"
-            try:
+            with contextlib.suppress(Exception):
                 await page.screenshot(path=str(screenshot_path), full_page=False)
-            except Exception:
-                pass
             return videos
 
         # Scroll and extract
