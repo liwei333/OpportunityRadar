@@ -148,6 +148,14 @@ class DouyinCollector:
                     else:
                         queries_failed = queries[:]
 
+                # Log collection mode summary
+                search_count = sum(1 for v in all_raw_videos if v.collection_mode == "search")
+                feed_count = sum(1 for v in all_raw_videos if v.collection_mode == "feed")
+                logger.info(
+                    "Collection breakdown: %d search, %d feed",
+                    search_count, feed_count,
+                )
+
                 # Extract accounts from videos
                 all_raw_accounts = await extractor.extract_accounts_from_videos(
                     all_raw_videos
@@ -204,22 +212,69 @@ class DouyinCollector:
         logger.info("Searching: %s", url)
         await page.goto(url, wait_until="domcontentloaded", timeout=30000)
 
-        # Check for verification
+        # Wait for initial render
+        await asyncio.sleep(5)
+
+        # Check for captcha overlay (blocks all interaction)
+        if await extractor.check_captcha_required():
+            solved = await extractor.wait_for_captcha(timeout_ms=180000)
+            if not solved:
+                logger.warning("Captcha not solved for query: %s", query)
+                return videos
+            # After captcha, wait for content to load
+            await asyncio.sleep(5)
+
+        # Check for verification page
         if await extractor.check_verification_required():
             verified = await extractor.wait_for_verification(timeout_ms=120000)
             if not verified:
                 logger.warning("Verification not solved for query: %s", query)
                 return videos
+            await asyncio.sleep(5)
 
-        # Check for login
+        # Check for login dialog
         if await extractor.check_login_required():
             logged_in = await extractor.wait_for_login(timeout_ms=120000)
             if not logged_in:
                 logger.warning("Login not completed for query: %s", query)
                 return videos
+            await asyncio.sleep(5)
 
-        # Wait for content to load
-        await asyncio.sleep(5)
+        # Check if search results actually loaded
+        results_loaded = await self._check_search_results_loaded(page)
+        if not results_loaded:
+            # Try scrolling to trigger loading
+            logger.info("Results not loaded, trying scroll trigger...")
+            for _ in range(3):
+                await page.evaluate("window.scrollBy(0, 500)")
+                await asyncio.sleep(3)
+                results_loaded = await self._check_search_results_loaded(page)
+                if results_loaded:
+                    break
+
+            # Try clicking search input and submitting
+            if not results_loaded:
+                search_input = await page.query_selector('input[data-e2e="searchbar-input"]')
+                if search_input:
+                    try:
+                        await search_input.click(timeout=5000)
+                        await search_input.fill(query)
+                        await page.keyboard.press("Enter")
+                        await asyncio.sleep(8)
+                    except Exception:
+                        pass
+
+        # Final check
+        results_loaded = await self._check_search_results_loaded(page)
+        if not results_loaded:
+            logger.warning("Search results did not load for query: %s", query)
+            # Save diagnostic screenshot
+            screenshot_path = self._run_dir / "screenshots" / f"no_results_{query[:10]}.png"
+            try:
+                await page.screenshot(path=str(screenshot_path), full_page=False)
+            except Exception:
+                pass
+            return videos
 
         # Scroll and extract
         videos = await self._scroll_and_extract(
@@ -227,6 +282,24 @@ class DouyinCollector:
         )
 
         return videos
+
+    async def _check_search_results_loaded(self, page: Any) -> bool:
+        """Check if search results have actually loaded."""
+        result = await page.evaluate("""() => {
+            const cards = document.querySelectorAll('[class*="search-result-card"]');
+            if (cards.length > 0) return true;
+
+            // Also check for video links
+            const videoLinks = document.querySelectorAll('[href*="/video/"]');
+            if (videoLinks.length > 0) return true;
+
+            // Check body text length (results page has much more text)
+            const bodyText = document.body?.innerText || '';
+            if (bodyText.length > 1000) return true;
+
+            return false;
+        }""")
+        return result
 
     async def _collect_from_feed(
         self,

@@ -35,6 +35,8 @@ class RawVideoCandidate(BaseModel):
     share_count_raw: str | None = None
     duration: str | None = None
     source_query: str = ""
+    collection_mode: str = "feed"
+    source_page_url: str = ""
     collected_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     raw_text: str | None = None
     extraction_method: str = ""
@@ -80,6 +82,8 @@ class NormalizedVideo(BaseModel):
     share_count_raw: str | None = None
     duration: str | None = None
     source_query: str = ""
+    collection_mode: str = "feed"
+    source_page_url: str = ""
     collected_at: str
     dedup_key: str = ""
 

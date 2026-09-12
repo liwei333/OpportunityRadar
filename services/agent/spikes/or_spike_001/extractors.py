@@ -31,29 +31,40 @@ class DouyinExtractor:
     async def extract_videos_from_feed(
         self,
         source_query: str = "",
+        collection_mode: str = "feed",
+        source_page_url: str = "",
     ) -> list[RawVideoCandidate]:
         """Extract video candidates from the current feed/page.
 
         Uses multiple strategies:
-        1. Extract from feed card DIV elements with href attributes
-        2. Parse body text for video card patterns
-        3. Try structured DOM selectors
+        1. Extract from search-result-card elements (search mode)
+        2. Extract from feed card DIV elements with href attributes (feed mode)
+        3. Parse body text for video card patterns
+        4. Try structured DOM selectors
 
         Args:
             source_query: The search query that led to this page.
+            collection_mode: "search" or "feed".
+            source_page_url: The actual URL where data was extracted.
 
         Returns:
             List of raw video candidates extracted from the page.
         """
         videos: list[RawVideoCandidate] = []
 
-        # Strategy 1: Extract from feed card elements with href attributes
-        # This is the primary method for the homepage feed
-        videos.extend(
-            await self._extract_from_feed_cards(source_query)
+        # Strategy 1: Extract from search-result-card elements (search mode)
+        search_cards = await self._extract_from_search_cards(
+            source_query, source_page_url
         )
+        videos.extend(search_cards)
 
-        # Strategy 2: Parse body text for video card patterns
+        # Strategy 2: Extract from feed card elements with href attributes
+        if not videos:
+            videos.extend(
+                await self._extract_from_feed_cards(source_query)
+            )
+
+        # Strategy 3: Parse body text for video card patterns
         if not videos:
             body_text = await self._page.evaluate(
                 "() => document.body?.innerText?.substring(0, 5000) || ''"
@@ -63,13 +74,130 @@ class DouyinExtractor:
                     self._parse_feed_text(body_text, source_query)
                 )
 
-        # Strategy 3: Try structured DOM selectors
+        # Strategy 4: Try structured DOM selectors
         if not videos:
             videos.extend(
                 await self._extract_structured_videos(source_query)
             )
 
         return videos
+
+    async def _extract_from_search_cards(
+        self,
+        source_query: str,
+        source_page_url: str,
+    ) -> list[RawVideoCandidate]:
+        """Extract videos from search-result-card elements.
+
+        Search result cards have the structure:
+        div.search-result-card
+          - text: [duration][view_count][title] [@author] · [date]
+
+        Unlike feed cards, search cards do NOT have href attributes with video URLs.
+        Video IDs are not in the DOM. We parse the text content for metadata.
+        """
+        videos: list[RawVideoCandidate] = []
+
+        # Get all search-result-card elements
+        cards = await self._page.evaluate("""() => {
+            const cards = document.querySelectorAll('[class*="search-result-card"]');
+            return Array.from(cards).map(c => c.textContent?.trim() || '');
+        }""")
+
+        for card_text in cards:
+            if not card_text or len(card_text) < 20:
+                continue
+
+            video = self._parse_search_card_text(
+                card_text, source_query, source_page_url
+            )
+            if video:
+                videos.append(video)
+
+        return videos
+
+    def _parse_search_card_text(
+        self,
+        card_text: str,
+        source_query: str,
+        source_page_url: str,
+    ) -> RawVideoCandidate | None:
+        """Parse search result card text into a RawVideoCandidate.
+
+        Search card text format (single line):
+        [duration][view_count][title] [@author] · [date]
+
+        Example:
+        29:416489代运营怎么和老板谈单#短视频创作 #代运营@靳兴的运营速成指南 · 2月15日
+        """
+        # Parse the card content
+        duration = None
+        view_count = None
+        title = None
+        author = None
+        date = None
+
+        # Working copy of the text
+        remaining = card_text.strip()
+
+        # Extract duration: MM:SS or H:MM:SS at the start
+        dur_match = re.match(r"^(\d{1,2}:\d{2}(?::\d{2})?)", remaining)
+        if dur_match:
+            duration = dur_match.group(1)
+            remaining = remaining[dur_match.end():]
+
+        # Extract view count: number + optional 万/w suffix
+        view_match = re.match(r"([\d.]+[万w]?)", remaining)
+        if view_match:
+            view_count = view_match.group(1)
+            remaining = remaining[view_match.end():]
+
+        # Extract date at the end
+        date_patterns = [
+            r"[·\s]*(\d+月\d+日)\s*$",
+            r"[·\s]*(\d+天前)\s*$",
+            r"[·\s]*(\d+小时前)\s*$",
+            r"[·\s]*(\d+分钟前)\s*$",
+            r"[·\s]*(刚刚)\s*$",
+            r"[·\s]*(\d+/\d+/\d+)\s*$",
+            r"[·\s]*(\d{4}年\d+月\d+日)\s*$",
+        ]
+        for pattern in date_patterns:
+            date_match = re.search(pattern, remaining)
+            if date_match:
+                date = date_match.group(1)
+                remaining = remaining[:date_match.start()]
+                break
+
+        # Extract author: @username
+        author_match = re.search(r"@([^\s@][^@]*?)(?:\s*$|\s*[·])", remaining)
+        if not author_match:
+            author_match = re.search(r"@(\S+)", remaining)
+        if author_match:
+            author = "@" + author_match.group(1).strip()
+            remaining = remaining[:author_match.start()]
+
+        # Whatever remains is the title
+        title = remaining.strip()
+        if len(title) < 3:
+            title = None
+
+        # Only create candidate if we have BOTH title and author
+        # This filters out "相关搜索" sections and other non-video content
+        if not title or not author:
+            return None
+
+        return RawVideoCandidate(
+            title=title,
+            author_name=author,
+            view_count_raw=view_count,
+            duration=duration,
+            published_at=date,
+            source_query=source_query,
+            raw_text=card_text[:500],
+            extraction_method="search_result_card",
+            extraction_success=bool(title and author),
+        )
 
     async def _extract_from_feed_cards(
         self,
@@ -435,7 +563,59 @@ class DouyinExtractor:
     async def check_verification_required(self) -> bool:
         """Check if the page is showing a verification challenge."""
         title = await self._page.title()
-        return DouyinUrls.is_verification_page(title)
+        if DouyinUrls.is_verification_page(title):
+            return True
+
+        # Also check for captcha container
+        for selector in DouyinSelectors.CAPTCHA_CONTAINER:
+            try:
+                element = await self._page.query_selector(selector)
+                if element and await element.is_visible():
+                    return True
+            except Exception:
+                continue
+        return False
+
+    async def check_captcha_required(self) -> bool:
+        """Check if a captcha overlay is blocking interaction."""
+        for selector in DouyinSelectors.CAPTCHA_CONTAINER:
+            try:
+                element = await self._page.query_selector(selector)
+                if element and await element.is_visible():
+                    return True
+            except Exception:
+                continue
+        return False
+
+    async def wait_for_captcha(self, timeout_ms: int = 180000) -> bool:
+        """Wait for user to solve captcha challenge.
+
+        Args:
+            timeout_ms: Maximum time to wait in milliseconds.
+
+        Returns:
+            True if captcha was solved, False if timed out.
+        """
+        import asyncio
+        import time
+
+        print("\n" + "=" * 60)
+        print("CAPTCHA REQUIRED")
+        print("=" * 60)
+        print("Douyin is showing a captcha challenge.")
+        print("Please solve it in the browser window.")
+        print(f"Waiting up to {timeout_ms // 1000} seconds...")
+        print("=" * 60 + "\n")
+
+        start = time.time()
+        while (time.time() - start) * 1000 < timeout_ms:
+            if not await self.check_captcha_required():
+                print("[!] Captcha solved, continuing...")
+                return True
+            await asyncio.sleep(3)
+
+        print("[!] Captcha wait timed out.")
+        return False
 
     async def wait_for_login(self, timeout_ms: int = 120000) -> bool:
         """Wait for user to complete login.

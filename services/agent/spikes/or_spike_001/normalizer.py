@@ -157,6 +157,8 @@ def normalize_video(raw: RawVideoCandidate) -> NormalizedVideo:
         share_count_raw=raw.share_count_raw,
         duration=raw.duration,
         source_query=raw.source_query,
+        collection_mode=raw.collection_mode,
+        source_page_url=raw.source_page_url,
         collected_at=raw.collected_at,
         dedup_key=dedup_key,
     )

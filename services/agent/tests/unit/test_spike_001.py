@@ -239,6 +239,68 @@ class TestAccountDeduplication:
         assert unique[0].content_hits == 5
 
 
+# === Search Card Parsing ===
+
+
+class TestSearchCardParsing:
+    """Test search result card text parsing.
+
+    Search card format:
+    [duration][view_count][title] [@author] · [date]
+    """
+
+    def _make_extractor(self) -> object:
+        """Create extractor instance without page."""
+        from spikes.or_spike_001.extractors import DouyinExtractor
+        return DouyinExtractor.__new__(DouyinExtractor)
+
+    def test_parse_search_card_standard(self) -> None:
+        """Test parsing a standard search card."""
+        extractor = self._make_extractor()
+        text = "29:416489代运营怎么和老板谈单#短视频创作 #代运营@靳兴的运营速成指南 · 2月15日"
+
+        video = extractor._parse_search_card_text(text, "短视频代运营", "https://www.douyin.com/search/x")
+        assert video is not None
+        assert video.title is not None
+        assert "代运营" in video.title
+        assert video.author_name == "@靳兴的运营速成指南"
+        assert video.view_count_raw == "6489"
+        assert video.duration == "29:41"
+        assert video.published_at == "2月15日"
+        assert video.source_query == "短视频代运营"
+        assert video.extraction_method == "search_result_card"
+        assert video.extraction_success is True
+
+    def test_parse_search_card_with_wan(self) -> None:
+        """Test parsing search card with 万 view count."""
+        extractor = self._make_extractor()
+        text = "01:531.9万做短视频最简单的方式#短视频创业 #代运营 #编导@薛辉小清新 · 6月17日"
+
+        video = extractor._parse_search_card_text(text, "短视频代运营", "https://x")
+        assert video is not None
+        assert video.view_count_raw == "1.9万"
+        assert video.author_name == "@薛辉小清新"
+        assert video.published_at == "6月17日"
+
+    def test_parse_search_card_with_relative_date(self) -> None:
+        """Test parsing search card with relative date."""
+        extractor = self._make_extractor()
+        text = "09:1717.5万我要爬上这座充满巨蛇的高塔！ROBLOX @麟麟七的游戏日常 · 5天前"
+
+        video = extractor._parse_search_card_text(text, "test", "https://x")
+        assert video is not None
+        assert video.published_at == "5天前"
+        assert video.view_count_raw == "17.5万"
+
+    def test_parse_search_card_invalid(self) -> None:
+        """Test parsing invalid search card text."""
+        extractor = self._make_extractor()
+        text = "相关搜索短视频代运营公司"
+
+        video = extractor._parse_search_card_text(text, "test", "https://x")
+        assert video is None
+
+
 # === DataQualityReport ===
 
 

@@ -1,0 +1,32 @@
+{
+  "run_id": "39f8d81e-22f4-43a7-ba51-19ddc7b2f507",
+  "run_started_at": "2026-09-12T13:08:40.305181",
+  "run_finished_at": "2026-09-12T05:08:52.859646",
+  "duration_seconds": 12.55,
+  "queries_requested": 10,
+  "queries_completed": 10,
+  "queries_failed": 0,
+  "raw_result_count": 49,
+  "unique_video_count": 49,
+  "unique_account_count": 47,
+  "duplicate_video_count": 0,
+  "duplicate_account_count": 0,
+  "extract_success_count": 49,
+  "extract_failure_count": 0,
+  "traceable_url_count": 49,
+  "missing_title_count": 0,
+  "missing_author_count": 0,
+  "per_query_result_count": {
+    "短视频代运营": 49,
+    "企业短视频获客": 49,
+    "工业品短视频": 49,
+    "制造业短视频运营": 49,
+    "B2B短视频获客": 49,
+    "抖音企业获客": 49,
+    "工业品抖音运营": 49,
+    "制造业抖音获客": 49,
+    "短视频精准获客": 49,
+    "企业抖音代运营": 49
+  },
+  "errors": []
+}

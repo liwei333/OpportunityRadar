@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Desktop Search",
+    "url": "https://www.douyin.com/search/短视频代运营?type=video",
+    "final_url": "https://www.douyin.com/search/%E7%9F%AD%E8%A7%86%E9%A2%91%E4%BB%A3%E8%BF%90%E8%90%A5?type=video",
+    "title": "验证码中间页",
+    "is_verification": true,
+    "is_login": false,
+    "body_text_preview": "    "
+  },
+  {
+    "name": "Mobile Search",
+    "url": "https://m.douyin.com/search/短视频代运营?type=video",
+    "final_url": "https://m.douyin.com/search/%E7%9F%AD%E8%A7%86%E9%A2%91%E4%BB%A3%E8%BF%90%E8%90%A5?type=video",
+    "title": "404 Not Found",
+    "is_verification": false,
+    "is_login": false,
+    "body_text_preview": "404 Not Found\nTLB"
+  },
+  {
+    "name": "Douyin Homepage",
+    "url": "https://www.douyin.com",
+    "final_url": "https://www.douyin.com/jingxuan",
+    "title": "抖音精选电脑版 - 抖音旗下优质视频平台",
+    "is_verification": false,
+    "is_login": false,
+    "body_text_preview": "开启读屏标签\n读屏标签已关闭\n精选\n推荐\nAI抖音\n关注\n朋友\n我的\n直播\n放映厅\n短剧\n手机随时看更方便\n下载 APP\n2026 © 抖音\n京ICP备16016397号-3\n京公网安备11010802050006号\n电子营业执照\n信息网络传播视听节目许可证 0126733\n广播电视节目制作经营许可证 （京）字第11313号\n增值电信业务经营许可证 京B2-20170846\n网络文化经营许可证 京网文〔2025〕0181-061号\n互联网宗教信息服务许可证 京（2025）0000017\n药品医疗器械网络信息服务备案 （京）网药械信息备字（2023）第00570号\n互联网新闻信息服务许可证 11"
+  },
+  {
+    "name": "Mobile Homepage",
+    "url": "https://m.douyin.com",
+    "final_url": "https://m.douyin.com/",
+    "title": "404 Not Found",
+    "is_verification": false,
+    "is_login": false,
+    "body_text_preview": "404 Not Found\nTLB"
+  },
+  {
+    "name": "Douyin Discover",
+    "url": "https://www.douyin.com/discover",
+    "final_url": "https://www.douyin.com/jingxuan",
+    "title": "抖音精选电脑版 - 抖音旗下优质视频平台",
+    "is_verification": false,
+    "is_login": false,
+    "body_text_preview": "开启读屏标签\n读屏标签已关闭\n精选\n推荐\nAI抖音\n关注\n朋友\n我的\n直播\n放映厅\n短剧\n手机随时看更方便\n下载 APP\n2026 © 抖音\n京ICP备16016397号-3\n京公网安备11010802050006号\n电子营业执照\n信息网络传播视听节目许可证 0126733\n广播电视节目制作经营许可证 （京）字第11313号\n增值电信业务经营许可证 京B2-20170846\n网络文化经营许可证 京网文〔2025〕0181-061号\n互联网宗教信息服务许可证 京（2025）0000017\n药品医疗器械网络信息服务备案 （京）网药械信息备字（2023）第00570号\n互联网新闻信息服务许可证 11"
+  },
+  {
+    "name": "Search Subdomain",
+    "url": "https://s.douyin.com/s?keyword=短视频代运营",
+    "final_url": "https://s.douyin.com/s?keyword=%E7%9F%AD%E8%A7%86%E9%A2%91%E4%BB%A3%E8%BF%90%E8%90%A5",
+    "title": "404错误页",
+    "is_verification": false,
+    "is_login": false,
+    "body_text_preview": ""
+  }
+]

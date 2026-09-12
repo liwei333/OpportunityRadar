@@ -34,12 +34,19 @@ class DouyinSelectors:
         '[class*="login-panel"] button[class*="close"]',
     ]
 
-    # === Verification Detection ===
+    # === Verification / Captcha Detection ===
     VERIFICATION_INDICATORS = [
         "验证码中间页",
         "验证码",
         "captcha",
         "challenge",
+    ]
+
+    CAPTCHA_CONTAINER = [
+        '#captcha_container',
+        '[id*="captcha"]',
+        '[class*="captcha"]',
+        '[id*="Captcha"]',
     ]
 
     # === Search Page ===
