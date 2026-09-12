@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/browser_profile/
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Playwright
+.playwright/
+test-results/
+playwright-report/
+
+# Alembic (keep versions)
+# data/alembic/versions/*.py  -- we keep versions
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
