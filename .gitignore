@@ -25,10 +25,16 @@ env/
 
 # Database
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
 data/*.db
 data/browser_profile/
+data/runs/
+data/spikes/
+services/agent/data/opportunity_radar.db*
+services/agent/data/browser_profile/
+services/data/browser_profile/
 
 # Node
 node_modules/
