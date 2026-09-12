@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpportunityRadar · V6 MVP 原型</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#d8caf8;
+  --shell:#fff;
+  --panel:#fff;
+  --wash:#f6f2ff;
+  --wash-2:#eee7ff;
+  --line:#e8e3f0;
+  --ink:#231a36;
+  --text:#3a3347;
+  --muted:#857f91;
+  --purple:#241936;
+  --violet:#8c72d7;
+  --pink:#f58aba;
+  --orange:#f5b66f;
+  --mint:#9be5d3;
+  --green:#6eb892;
+  --red:#db6b6b;
+  --blue:#85b8eb;
+  --shadow:0 12px 28px rgba(62,40,108,.11);
+  --shadow-lg:0 30px 70px rgba(62,40,108,.20);
+  --radius:18px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+html,body{margin:0;height:100%;font-family:Inter,"Noto Sans SC","PingFang SC",-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+body{padding:16px;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.app{height:calc(100vh - 32px);min-height:720px;max-width:1600px;margin:auto;background:var(--shell);border-radius:28px;overflow:hidden;display:grid;grid-template-columns:82px minmax(0,1fr);box-shadow:var(--shadow-lg)}
+.sidebar{padding:22px 14px;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;background:#fff}
+.logo{width:44px;height:44px;position:relative;margin-bottom:24px}
+.logo:before,.logo:after,.logo span{content:"";position:absolute;inset:4px;border-radius:12px}
+.logo:before{background:#cdbcf6;transform:rotate(10deg)}
+.logo:after{background:var(--pink);transform:rotate(-8deg)}
+.logo span{display:grid;place-items:center;background:var(--purple);color:#fff;font-size:11px;font-weight:800;z-index:2}
+.nav{display:flex;flex-direction:column;gap:10px;width:100%;align-items:center}
+.nav-btn{width:46px;height:46px;border:0;background:transparent;border-radius:14px;display:grid;place-items:center;color:var(--muted);transition:.18s var(--ease);position:relative}
+.nav-btn:hover{background:var(--wash);color:var(--purple);transform:translateY(-1px)}
+.nav-btn.active{background:var(--purple);color:#fff;box-shadow:0 8px 18px rgba(36,25,54,.20)}
+.nav-btn svg{width:20px;height:20px}
+.nav-label{display:none}
+.spacer{flex:1}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#efb5d2,#c5b2ef);font-weight:800;color:var(--purple)}
+.workspace{min-width:0;display:grid;grid-template-rows:70px minmax(0,1fr);background:#fbfaff}
+.topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(255,255,255,.95);border-bottom:1px solid var(--line)}
+.brand{min-width:240px}
+.brand strong{display:block;font-size:14px;color:var(--purple)}
+.brand span{font-size:10px;color:var(--muted)}
+.top-search{flex:1;max-width:720px;position:relative}
+.top-search input{width:100%;height:42px;border:1px solid var(--line);border-radius:999px;padding:0 16px 0 42px;background:#fff;outline:none}
+.top-search svg{position:absolute;left:14px;top:12px;width:18px;height:18px;color:var(--muted)}
+.top-actions{display:flex;gap:8px;margin-left:auto}
+.btn{border:0;border-radius:999px;padding:10px 14px;font-size:11px;font-weight:700;transition:.18s var(--ease)}
+.btn.primary{background:var(--purple);color:#fff;box-shadow:0 6px 16px rgba(36,25,54,.18)}
+.btn.primary:hover{transform:translateY(-1px)}
+.btn.ghost{background:#fff;border:1px solid var(--line)}
+.btn.soft{background:var(--wash);color:var(--purple)}
+.btn.small{padding:7px 10px;font-size:10px}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center}
+.icon-btn svg{width:18px;height:18px}
+.main{min-height:0;overflow:hidden}
+.page{display:none;height:100%}
+.page.active{display:block;animation:fade .22s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.scroll{height:100%;overflow:auto;padding:18px 20px 26px}
+.scroll::-webkit-scrollbar,.drawer::-webkit-scrollbar{width:6px}
+.scroll::-webkit-scrollbar-thumb,.drawer::-webkit-scrollbar-thumb{background:#d8d0e7;border-radius:999px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.page-head h1{font-size:22px;line-height:1.2;margin:0;color:var(--purple)}
+.page-head p{font-size:11px;color:var(--muted);margin:6px 0 0}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:#fff;border:1px solid rgba(232,227,240,.9);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:15px 16px 10px}
+.card-head h3{font-size:14px;margin:0;color:var(--purple)}
+.card-head p{font-size:10px;color:var(--muted);margin:4px 0 0;line-height:1.5}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:700}
+.tag.green{background:#eaf8f1;color:#4a8a68}
+.tag.purple{background:#f0ebfb;color:#66539b}
+.tag.orange{background:#fff4e6;color:#ad6e2d}
+.tag.red{background:#fff0f0;color:#b94f4f}
+.tag.blue{background:#edf6ff;color:#4f7eab}
+.tag.gray{background:#f4f3f7;color:#7e7889}
+.tag.pink{background:#fff0f7;color:#b95c88}
+.kicker{font-size:10px;letter-spacing:.18em;font-weight:700;color:#7c6aa7;text-transform:uppercase}
+.muted{color:var(--muted)}
+.sep{height:1px;background:var(--line)}
+
+/* Agent page */
+.agent-hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:14px}
+.prompt-card{padding:22px;background:linear-gradient(135deg,#efe8ff,#dbcdf9);position:relative;overflow:hidden}
+.prompt-card:after{content:"✦";position:absolute;right:20px;top:-18px;font-size:110px;color:rgba(255,255,255,.28)}
+.prompt-card h2{font-size:25px;line-height:1.25;margin:8px 0 8px;color:var(--purple);max-width:760px}
+.prompt-card p{font-size:12px;color:#655c74;line-height:1.7;margin:0 0 15px}
+.prompt-box{position:relative;z-index:1;background:#fff;border:1px solid rgba(255,255,255,.95);border-radius:16px;padding:12px;box-shadow:0 10px 26px rgba(98,71,154,.10)}
+.prompt-box textarea{width:100%;min-height:110px;resize:vertical;border:0;outline:none;font-size:13px;line-height:1.7;background:transparent}
+.prompt-actions{display:flex;align-items:center;gap:8px;margin-top:8px}
+.prompt-hint{font-size:9px;color:var(--muted);margin-right:auto}
+.criteria-card{padding:18px}
+.criteria-card h3{font-size:15px;margin:0 0 4px;color:var(--purple)}
+.criteria-card>p{font-size:10px;color:var(--muted);margin:0 0 12px}
+.criteria{display:flex;flex-direction:column;gap:9px}
+.criterion{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:11px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.criterion .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:10px}
+.criterion strong{font-size:11px;display:block}
+.criterion p{font-size:9px;color:var(--muted);line-height:1.5;margin:3px 0 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.recent-run{padding:0 12px 12px}
+.run-row{display:grid;grid-template-columns:1fr 120px 90px auto;gap:12px;align-items:center;padding:11px 8px;border-top:1px solid var(--line)}
+.run-row:first-child{border-top:0}
+.run-row strong{font-size:11px}
+.run-row p{font-size:9px;color:var(--muted);margin:4px 0 0}
+.run-row .num{font-size:16px;font-weight:800;color:var(--purple)}
+.agent-principles{padding:0 14px 14px}
+.principle{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.principle:first-child{border-top:0}
+.principle b{width:24px;height:24px;border-radius:8px;background:var(--wash-2);display:grid;place-items:center;font-size:9px;color:#6e5ca2}
+.principle strong{font-size:10px;display:block}
+.principle span{font-size:9px;color:var(--muted);line-height:1.5}
+
+/* Research Run */
+.run-banner{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 20px;background:linear-gradient(135deg,#efe8ff,#d7c7fa)}
+.run-banner h2{font-size:17px;margin:4px 0 5px;color:var(--purple)}
+.run-banner p{font-size:10px;margin:0;color:#675d78}
+.run-status{min-width:160px;text-align:right}
+.run-status strong{font-size:13px;color:var(--purple)}
+.pipeline{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:14px 0}
+.step{padding:10px;border-radius:13px;background:#fff;border:1px solid var(--line);position:relative;min-height:74px}
+.step.done{background:#f3fbf7;border-color:#d5efe2}
+.step.active{background:#f4efff;border-color:#cdbcf6;box-shadow:0 8px 20px rgba(105,83,163,.12)}
+.step .n{width:20px;height:20px;border-radius:7px;background:#eeeaf4;display:grid;place-items:center;font-size:9px;font-weight:800;margin-bottom:7px}
+.step.done .n{background:#d9f0e4;color:#47785d}
+.step.active .n{background:var(--purple);color:#fff}
+.step strong{font-size:10px;display:block}
+.step span{font-size:8px;color:var(--muted);line-height:1.4}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.metric{padding:13px 14px}
+.metric .k{font-size:9px;color:var(--muted)}
+.metric .v{font-size:23px;font-weight:800;color:var(--purple);margin-top:6px}
+.metric .f{font-size:9px;color:var(--muted);margin-top:4px}
+.run-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:14px}
+.quality{padding:0 14px 14px}
+.quality-row{display:grid;grid-template-columns:140px 1fr 54px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.quality-row:first-child{border-top:0}
+.quality-row strong{font-size:10px}
+.progress{height:8px;background:#efeaf5;border-radius:999px;overflow:hidden}
+.progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),var(--pink))}
+.quality-row b{font-size:10px;text-align:right}
+.gate{margin:10px 0 0;padding:11px;border-radius:12px;background:#eef9f3;border:1px solid #d5efe1}
+.gate strong{font-size:11px;color:#4c8264}
+.gate p{font-size:9px;line-height:1.5;color:#638172;margin:4px 0 0}
+.query-list{padding:0 14px 14px}
+.query{display:grid;grid-template-columns:1fr 56px 56px 68px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.query:first-child{border-top:0}
+.query strong{font-size:10px}
+.query span{font-size:9px;color:var(--muted);text-align:right}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:9px;color:var(--muted);text-align:left;background:#fcfbfe;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{font-size:10px;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:#fdfcff}
+.source-link{color:#6d5aa7;text-decoration:none;font-size:9px}
+.source-link:hover{text-decoration:underline}
+
+/* Opportunity */
+.summary-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.summary-item{padding:12px 14px}
+.summary-item span{font-size:9px;color:var(--muted)}
+.summary-item b{display:block;font-size:21px;color:var(--purple);margin-top:4px}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input,.toolbar select{height:38px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 12px;font-size:10px}
+.toolbar input{min-width:260px;flex:1}
+.opportunity-table .buyer{display:flex;gap:9px;align-items:center}
+.company-avatar{width:32px;height:32px;border-radius:10px;background:var(--wash-2);display:grid;place-items:center;font-weight:800;color:#65539a}
+.score{font-size:18px;font-weight:800;color:var(--purple)}
+.reason{max-width:360px;line-height:1.5;color:#625c6c}
+.action-link{border:0;background:transparent;color:#6e5ba7;font-weight:700;font-size:10px;padding:0}
+
+/* Sales */
+.sales-grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px}
+.deal-list{padding:0 12px 12px}
+.deal{padding:11px;border:1px solid var(--line);border-radius:13px;margin-top:8px;cursor:pointer;transition:.16s}
+.deal:hover,.deal.active{border-color:#c8b7ef;background:#faf8ff}
+.deal strong{font-size:11px}
+.deal p{font-size:9px;color:var(--muted);line-height:1.5;margin:5px 0 7px}
+.deal-foot{display:flex;justify-content:space-between;align-items:center}
+.copilot{padding:16px}
+.copilot-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+.copilot-top h3{font-size:15px;margin:0;color:var(--purple)}
+.copilot-top p{font-size:10px;color:var(--muted);margin:4px 0 0}
+.reply-input{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fbfaff}
+.reply-input textarea{width:100%;min-height:90px;border:0;outline:none;background:transparent;resize:vertical;font-size:11px;line-height:1.6}
+.analysis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
+.analysis-box{padding:11px;border-radius:12px;background:#faf8ff;border:1px solid var(--line)}
+.analysis-box span{font-size:8px;color:var(--muted)}
+.analysis-box strong{display:block;font-size:11px;color:var(--purple);margin-top:4px}
+.next-action{margin-top:10px;padding:12px;background:#fff7ed;border:1px solid #f2ddc2;border-radius:12px}
+.next-action strong{font-size:10px;color:#9b6228}
+.next-action p{font-size:9px;line-height:1.5;color:#7a6857;margin:4px 0 0}
+.reply-card{margin-top:10px;border:1px solid var(--line);border-radius:13px;padding:12px}
+.reply-card .label{font-size:9px;color:var(--muted)}
+.reply-card p{font-size:11px;line-height:1.65;margin:7px 0 10px}
+.pricing{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.price-card{padding:13px;border:1px solid var(--line);border-radius:13px}
+.price-card.featured{background:#f7f2ff;border-color:#cdbdf2}
+.price-card span{font-size:9px;color:var(--muted)}
+.price-card b{display:block;font-size:22px;color:var(--purple);margin:4px 0}
+.price-card p{font-size:9px;color:var(--muted);margin:0}
+
+/* Advanced */
+.advanced-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.config{padding:15px}
+.config h3{font-size:14px;margin:0 0 10px;color:var(--purple)}
+.form-row{margin-bottom:11px}
+.form-row label{display:block;font-size:9px;color:var(--muted);margin-bottom:5px}
+.form-row input,.form-row textarea,.form-row select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:10px;background:#fff}
+.form-row textarea{min-height:80px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 8px;border-radius:999px;background:#f5f1ff;border:1px solid #dfd5f6;font-size:9px}
+.weight{display:grid;grid-template-columns:1fr 60px;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.weight:first-child{border-top:0}
+.weight span{font-size:10px}
+.weight input{height:30px;border:1px solid var(--line);border-radius:8px;text-align:center}
+
+/* Drawer / modal */
+.mask{display:none;position:fixed;inset:0;background:rgba(36,25,54,.22);z-index:80}
+.mask.show{display:block}
+.drawer{position:fixed;top:16px;right:-580px;width:540px;height:calc(100vh - 32px);background:#fff;border-radius:24px 0 0 24px;z-index:90;box-shadow:-20px 0 52px rgba(55,37,93,.19);transition:.25s var(--ease);overflow:auto}
+.drawer.show{right:16px}
+.drawer-head{position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;z-index:2}
+.drawer-head h2{font-size:16px;margin:0;color:var(--purple)}
+.close{width:32px;height:32px;border:0;border-radius:10px;background:#f5f3f8;font-size:16px}
+.drawer-body{padding:16px 18px}
+.detail{border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:10px}
+.detail h4{font-size:10px;color:var(--muted);margin:0 0 7px}
+.detail p{font-size:10px;line-height:1.6;margin:0}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.score-item{padding:9px;background:#faf9fd;border-radius:10px}
+.score-item span{font-size:8px;color:var(--muted)}
+.score-item b{display:block;font-size:13px;color:var(--purple);margin-top:3px}
+.evidence{padding:9px;border-left:3px solid #cbbbed;background:#fbf9ff;border-radius:0 10px 10px 0;margin-top:7px}
+.evidence strong{font-size:9px}
+.evidence p{font-size:9px;color:#655f70;margin:3px 0 5px}
+.outreach{background:#fbfaff;border:1px solid var(--line);border-radius:12px;padding:11px}
+.outreach p{font-size:10px;line-height:1.65;margin:0}
+.drawer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.toast-wrap{position:fixed;top:26px;right:28px;z-index:120;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--purple);color:#fff;padding:10px 12px;border-radius:12px;box-shadow:var(--shadow);min-width:240px}
+.toast strong{font-size:10px;display:block}
+.toast span{font-size:9px;color:rgba(255,255,255,.76)}
+.demo-note{font-size:9px;color:#9a93a5;margin-top:8px}
+
+/* responsive */
+@media(max-width:1150px){
+  .agent-hero,.run-grid,.sales-grid,.advanced-grid{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:repeat(4,1fr)}
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  .summary-strip{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:780px){
+  body{padding:0;overflow:auto}
+  .app{height:auto;min-height:100vh;border-radius:0;grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;height:66px;border-right:0;border-top:1px solid var(--line);flex-direction:row;justify-content:center;padding:8px}
+  .logo,.spacer,.avatar{display:none}
+  .nav{flex-direction:row;justify-content:center}
+  .workspace{grid-template-rows:64px 1fr;padding-bottom:66px}
+  .topbar{padding:10px 12px}
+  .brand{min-width:0}
+  .brand span{display:none}
+  .top-search{display:none}
+  .scroll{padding:12px}
+  .grid2{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:repeat(2,1fr)}
+  .metrics,.summary-strip{grid-template-columns:repeat(2,1fr)}
+  .analysis-grid{grid-template-columns:1fr}
+  .pricing{grid-template-columns:1fr}
+  .drawer{top:0;right:-100%;width:100%;height:100vh;border-radius:0}
+  .drawer.show{right:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo" title="OpportunityRadar"><span>OR</span></div>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="agent" title="研究 Agent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v12H8l-4 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>
+      </button>
+      <button class="nav-btn" data-page="runs" title="研究任务">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+      </button>
+      <button class="nav-btn" data-page="opportunities" title="商机池">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+      </button>
+      <button class="nav-btn" data-page="sales" title="成交助手">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"/><path d="M8 10h8M8 14h5"/></svg>
+      </button>
+    </nav>
+    <div class="spacer"></div>
+    <button class="nav-btn" data-page="advanced" title="高级设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg>
+    </button>
+    <div class="avatar">拓</div>
+  </aside>
+
+  <section class="workspace">
+    <header class="topbar">
+      <div class="brand"><strong>OpportunityRadar</strong><span>Customer #0001 · AI Research Agent MVP</span></div>
+      <div class="top-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="globalAsk" placeholder="问 Agent：今天最值得联系谁？为什么？" />
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost small" onclick="openPage('runs')">查看最近研究</button>
+        <button class="btn primary small" onclick="newResearch()">＋ 新研究</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="page active" id="agent">
+        <div class="scroll">
+          <div class="page-head">
+            <div><div class="kicker">Research Agent</div><h1>告诉我你想找到什么商业机会</h1><p>你给目标，Agent 负责规划、搜索、收集、清洗、筛选、评分和证据整理。</p></div>
+            <div class="head-actions"><span class="tag blue">V6 · MVP Focus</span><span class="tag orange">演示数据</span></div>
+          </div>
+
+          <div class="agent-hero">
+            <section class="card prompt-card">
+              <div class="kicker">CUSTOMER #0001</div>
+              <h2>先让 OpportunityRadar 找到最可能购买 OpportunityRadar 的客户。</h2>
+              <p>第一 ICP：B2B / 工业品短视频代运营、企业获客服务商。目标不是“搜到很多公司”，而是找到真正值得联系、愿意付费概率更高的对象。</p>
+              <div class="prompt-box">
+                <textarea id="researchGoal">帮我寻找最可能购买 OpportunityRadar 的客户，优先寻找服务 B2B、制造业、工业品企业的短视频代运营和企业获客公司。</textarea>
+                <div class="prompt-actions">
+                  <span class="prompt-hint">无需填写关键词、平台筛选条件或评分规则。</span>
+                  <button class="btn ghost small" onclick="loadDemoGoal()">恢复默认</button>
+                  <button class="btn primary" onclick="startResearch()">开始研究 →</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="card criteria-card">
+              <h3>V0 只验证三件事</h3>
+              <p>页面可以丑，但结果必须证明产品成立。</p>
+              <div class="criteria">
+                <div class="criterion"><div class="ico" style="background:#f1ecff;color:#705ba5">01</div><div><strong>智能</strong><p>一句自然语言目标，Agent 自己形成 ICP 与研究计划。</p></div></div>
+                <div class="criterion"><div class="ico" style="background:#ecf8ff;color:#4f7ca1">02</div><div><strong>高效</strong><p>200+ 原始候选压缩成 ≤20 个真正值得看的对象。</p></div></div>
+                <div class="criterion"><div class="ico" style="background:#eef9f3;color:#54866b">03</div><div><strong>有效</strong><p>TOP20 人工认可率 ≥70%，每个 S/A 买家都有可追溯证据。</p></div></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid2">
+            <section class="card">
+              <div class="card-head"><div><h3>最近研究任务</h3><p>研究不是“监控配置”，而是一项有目标、有证据、有结果的 Agent 工作。</p></div><button class="btn soft small" onclick="openPage('runs')">全部任务</button></div>
+              <div class="recent-run">
+                <div class="run-row">
+                  <div><strong>寻找 OpportunityRadar 第一批买家</strong><p>18 个研究方向 · 抖音 Web · Buyer Research</p></div>
+                  <div><span class="tag green">已完成</span></div>
+                  <div><span class="num">20</span><p>TOP Buyers</p></div>
+                  <button class="btn ghost small" onclick="openPage('runs')">查看结果</button>
+                </div>
+                <div class="run-row">
+                  <div><strong>制造业短视频代运营需求扫描</strong><p>12 个研究方向 · 样例任务</p></div>
+                  <div><span class="tag gray">草稿</span></div>
+                  <div><span class="num">—</span><p>尚未执行</p></div>
+                  <button class="btn ghost small" onclick="toast('样例任务','V0 当前只聚焦第一条真实任务')">查看</button>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-head"><div><h3>Agent 工作原则</h3><p>避免把 OpportunityRadar 做成一个“高级爬虫后台”。</p></div></div>
+              <div class="agent-principles">
+                <div class="principle"><b>1</b><div><strong>用户给目标，不给关键词</strong><span>搜索策略是 Agent 的工作，而不是用户配置负担。</span></div></div>
+                <div class="principle"><b>2</b><div><strong>数据质量不过关，不生成假精确评分</strong><span>真实数据先过 Gate，再进入 Buyer Intelligence。</span></div></div>
+                <div class="principle"><b>3</b><div><strong>每个结论必须能回到证据</strong><span>评分 + 原因 + 来源，避免黑盒数字。</span></div></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="runs">
+        <div class="scroll">
+          <div class="page-head">
+            <div><div class="kicker">Research Run</div><h1>研究任务执行与数据质量</h1><p>这里直接展示 Agent 到底做了多少工作，以及数据有没有资格进入评分阶段。</p></div>
+            <div class="head-actions"><button class="btn ghost small" onclick="openRawData()">查看原始数据</button><button class="btn primary small" onclick="startResearch()">重新运行</button></div>
+          </div>
+
+          <section class="card run-banner">
+            <div><div class="kicker">RUN OR-0001</div><h2>寻找最可能购买 OpportunityRadar 的目标客户</h2><p>B2B / 工业品短视频代运营 · 企业获客服务商 · 抖音 Web</p></div>
+            <div class="run-status"><span class="tag green" id="runStatusTag">已完成 · PASS</span><div class="demo-note">当前为原型演示数据</div></div>
+          </section>
+
+          <div class="pipeline" id="pipeline"></div>
+
+          <div class="metrics">
+            <section class="card metric"><div class="k">研究方向</div><div class="v" id="mQueries">18</div><div class="f">直接词 / 痛点词 / 场景词 / 扩展词</div></section>
+            <section class="card metric"><div class="k">原始候选内容</div><div class="v" id="mRaw">286</div><div class="f">跨关键词累计</div></section>
+            <section class="card metric"><div class="k">独立账号</div><div class="v" id="mAccounts">97</div><div class="f">去重与归并后</div></section>
+            <section class="card metric"><div class="k">高潜买家</div><div class="v" id="mHigh">31</div><div class="f">Buyer Score ≥ 80</div></section>
+            <section class="card metric"><div class="k">最终输出</div><div class="v">20</div><div class="f">用户只看 TOP20</div></section>
+          </div>
+
+          <div class="run-grid">
+            <section class="card">
+              <div class="card-head"><div><h3>Data Quality Gate</h3><p>真实数据质量不过关时，OpportunityRadar 不应该“硬算一个分数”。</p></div><span class="tag green">PASS</span></div>
+              <div class="quality">
+                <div class="quality-row"><strong>URL 可追溯率</strong><div class="progress"><i style="width:99%"></i></div><b>99%</b></div>
+                <div class="quality-row"><strong>结构化提取成功率</strong><div class="progress"><i style="width:94.8%"></i></div><b>94.8%</b></div>
+                <div class="quality-row"><strong>去重准确率</strong><div class="progress"><i style="width:96%"></i></div><b>96%</b></div>
+                <div class="quality-row"><strong>基础相关率</strong><div class="progress"><i style="width:82.3%"></i></div><b>82.3%</b></div>
+                <div class="gate"><strong>✓ 数据质量达到评分门槛</strong><p>允许进入 ICP 判断、Buy-vs-Build 分类、Buyer Score 和 Evidence 生成。</p></div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-head"><div><h3>搜索计划执行情况</h3><p>研究方向不是用户手工配置，而是 Agent 自主拆解。</p></div><button class="btn soft small" onclick="openPage('advanced')">高级查看</button></div>
+              <div class="query-list">
+                <div class="query"><strong>企业短视频获客</strong><span>41 内容</span><span>18 账号</span><span>高相关 12</span></div>
+                <div class="query"><strong>工业品短视频代运营</strong><span>36 内容</span><span>15 账号</span><span>高相关 11</span></div>
+                <div class="query"><strong>制造业抖音获客</strong><span>28 内容</span><span>14 账号</span><span>高相关 9</span></div>
+                <div class="query"><strong>B2B短视频营销</strong><span>31 内容</span><span>12 账号</span><span>高相关 8</span></div>
+                <div class="query"><strong>工业品精准获客</strong><span>22 内容</span><span>9 账号</span><span>高相关 7</span></div>
+              </div>
+            </section>
+          </div>
+
+          <section class="card" style="margin-top:14px">
+            <div class="card-head"><div><h3>原始数据抽样</h3><p>所有 TOP 结论都能回到原始内容，不允许只留 AI 总结。</p></div><button class="btn ghost small" onclick="openRawData()">查看全部样例</button></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>账号</th><th>内容摘要</th><th>命中研究方向</th><th>初步相关</th><th>来源</th></tr></thead>
+                <tbody>
+                  <tr><td>鲸跃工业营销</td><td>制造业企业如何通过短视频拿到精准询盘</td><td>工业品短视频代运营</td><td><span class="tag green">高</span></td><td><a class="source-link" href="javascript:void(0)">查看原始页</a></td></tr>
+                  <tr><td>增长工厂Lab</td><td>工业设备短视频账号为什么总是没有询盘</td><td>工业品精准获客</td><td><span class="tag green">高</span></td><td><a class="source-link" href="javascript:void(0)">查看原始页</a></td></tr>
+                  <tr><td>拓客增长局</td><td>企业短视频获客流程拆解</td><td>企业短视频获客</td><td><span class="tag green">高</span></td><td><a class="source-link" href="javascript:void(0)">查看原始页</a></td></tr>
+                  <tr><td>某短视频软件</td><td>AI自动获客系统发布</td><td>B2B短视频营销</td><td><span class="tag orange">竞品</span></td><td><a class="source-link" href="javascript:void(0)">查看原始页</a></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="opportunities">
+        <div class="scroll">
+          <div class="page-head">
+            <div><div class="kicker">Opportunity Board</div><h1>TOP Buyers · 商机池</h1><p>不是“搜到谁都算客户”。先区分 BUYER / COMPETITOR / PARTNER，再做 Buyer Score。</p></div>
+            <div class="head-actions"><button class="btn ghost small" onclick="toast('已导出','原型模拟导出 TOP20.csv')">导出 TOP20</button></div>
+          </div>
+
+          <div class="summary-strip">
+            <section class="card summary-item"><span>S 级买家</span><b>8</b></section>
+            <section class="card summary-item"><span>A 级买家</span><b>12</b></section>
+            <section class="card summary-item"><span>竞争对手</span><b>7</b></section>
+            <section class="card summary-item"><span>潜在合作伙伴</span><b>5</b></section>
+            <section class="card summary-item"><span>Precision@20</span><b>80%</b></section>
+          </div>
+
+          <div class="toolbar">
+            <input id="oppSearch" placeholder="搜索公司、业务、证据…" oninput="renderOpportunities()" />
+            <select id="oppType" onchange="renderOpportunities()"><option value="">全部分类</option><option>BUYER</option><option>COMPETITOR</option><option>PARTNER</option></select>
+            <select id="oppLevel" onchange="renderOpportunities()"><option value="">全部等级</option><option>S</option><option>A</option><option>B</option></select>
+            <button class="btn ghost small" onclick="resetOppFilters()">清空筛选</button>
+          </div>
+
+          <section class="card opportunity-table">
+            <div class="table-wrap"><table id="oppTable"></table></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="sales">
+        <div class="scroll">
+          <div class="page-head">
+            <div><div class="kicker">Sales Copilot</div><h1>成交助手</h1><p>OpportunityRadar 不替用户骚扰客户，只负责让每一次沟通更专业、更短、更接近成交。</p></div>
+            <div class="head-actions"><span class="tag purple">Early Access ¥499/月</span><span class="tag gray">标准价 ¥999/月</span></div>
+          </div>
+
+          <div class="sales-grid">
+            <section class="card">
+              <div class="card-head"><div><h3>当前跟进对象</h3><p>V0 只保留轻量成交状态，不做完整 CRM。</p></div></div>
+              <div class="deal-list" id="dealList"></div>
+            </section>
+
+            <section class="card copilot">
+              <div class="copilot-top"><div><h3 id="salesTitle">鲸跃工业营销</h3><p id="salesSub">当前阶段：EVALUATING · 已看过 Demo</p></div><span class="tag orange" id="dealScore">Deal Readiness 76</span></div>
+              <div class="reply-input">
+                <div class="muted" style="font-size:9px;margin-bottom:5px">粘贴客户最新回复</div>
+                <textarea id="customerReply">这个和飞瓜有什么区别？我们现在也会自己用AI分析。</textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:7px"><button class="btn primary small" onclick="analyzeReply()">分析回复</button></div>
+              </div>
+
+              <div class="analysis-grid">
+                <div class="analysis-box"><span>客户意图</span><strong id="aIntent">比较替代方案</strong></div>
+                <div class="analysis-box"><span>成交阶段</span><strong id="aStage">EVALUATING</strong></div>
+                <div class="analysis-box"><span>核心异议</span><strong id="aObjection">差异化不足</strong></div>
+              </div>
+
+              <div class="next-action"><strong>Next Best Action</strong><p id="nextAction">不要继续堆功能。直接强调“飞瓜给数据，我们给值得行动的对象”，并邀请用客户自己的行业跑一次对比 Demo。</p></div>
+
+              <div class="reply-card">
+                <div class="label">建议回复 · 2～4 句</div>
+                <p id="suggestedReply">飞瓜更偏数据分析，我们更偏“直接帮你筛出值得行动的客户”。你给我一个目标客户，我可以直接拿你们真实行业跑一次，对比起来会更直观。</p>
+                <button class="btn ghost small" onclick="copyReply()">复制回复</button>
+              </div>
+
+              <div class="pricing">
+                <div class="price-card featured"><span>Founder Early Access · 前10家</span><b>¥499 / 月</b><p>用真实项目反馈来换首批锁定价。免费只跑一次真实业务 Demo。</p></div>
+                <div class="price-card"><span>Standard</span><b>¥999 / 月</b><p>正式版计划价格。客户认可 Demo 结果后再进入报价，不先打价格战。</p></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="advanced">
+        <div class="scroll">
+          <div class="page-head">
+            <div><div class="kicker">Advanced</div><h1>高级研究配置</h1><p>默认隐藏。OpportunityRadar 应该先自己研究，只有高级用户才需要干预计划与评分。</p></div>
+            <div class="head-actions"><button class="btn primary small" onclick="toast('已保存','高级设置已保存到当前原型状态')">保存高级设置</button></div>
+          </div>
+
+          <div class="advanced-grid">
+            <section class="card config">
+              <h3>Research Plan</h3>
+              <div class="form-row"><label>当前目标客户</label><textarea>B2B / 工业品短视频代运营、企业获客服务商</textarea></div>
+              <div class="form-row"><label>研究方向（Agent 自动生成）</label><div class="chips"><span class="chip">企业短视频获客</span><span class="chip">工业品短视频代运营</span><span class="chip">制造业抖音运营</span><span class="chip">B2B短视频营销</span><span class="chip">工业品精准获客</span><span class="chip">矩阵获客</span></div></div>
+              <div class="form-row"><label>数据源</label><select><option>抖音 Web（V0）</option></select></div>
+              <div class="form-row"><label>策略说明</label><textarea>Agent 可以自主扩词和发现新研究方向；涉及正式评分模型修改时保留用户审核。</textarea></div>
+            </section>
+
+            <section class="card config">
+              <h3>Buyer Score V0</h3>
+              <div class="weight"><span>ICP Fit</span><input value="25"></div>
+              <div class="weight"><span>Pain / Problem Intensity</span><input value="20"></div>
+              <div class="weight"><span>Usage Frequency</span><input value="15"></div>
+              <div class="weight"><span>Existing Spend Signal</span><input value="15"></div>
+              <div class="weight"><span>Customer Value</span><input value="10"></div>
+              <div class="weight"><span>Buy-vs-Build Fit</span><input value="10"></div>
+              <div class="weight"><span>Reachability</span><input value="5"></div>
+              <div class="form-row" style="margin-top:10px"><label>评分原则</label><textarea>禁止只输出黑盒总分。S/A 买家至少需要 2 条可追溯证据；竞品与潜在合作伙伴单独分类。</textarea></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+</div>
+
+<div class="mask" id="mask" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><h2 id="drawerTitle">详情</h2><button class="close" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const state={
+  page:'agent',
+  pipeline:[
+    ['理解目标','识别 ICP / 购买场景'],
+    ['研究规划','生成 18 个研究方向'],
+    ['批量搜索','抖音 Web'],
+    ['收集','286 条候选内容'],
+    ['清洗去重','97 个独立账号'],
+    ['筛选分类','BUYER / COMPETITOR / PARTNER'],
+    ['智能评分','TOP20 + Evidence']
+  ],
+  opportunities:[
+    {id:1,name:'鲸跃工业营销',type:'BUYER',level:'S',score:94,biz:'工业品短视频代运营',reason:'服务制造业企业，重复做行业研究与选题，公开内容长期强调精准获客。',evidence:3,risk:'暂未确认其现有数据工具预算',demo:'帮它寻找正在做短视频但询盘不足的激光设备厂家。',scores:[['ICP Fit','25/25'],['Pain','18/20'],['Usage','15/15'],['Existing Spend','12/15'],['Customer Value','10/10'],['Buy-vs-Build','9/10'],['Reachability','5/5']],proof:['主页明确提供制造企业短视频代运营服务。','多个公开视频持续讨论工业品精准获客和询盘问题。','公开案例显示同时服务多个企业客户。']},
+    {id:2,name:'增长工厂Lab',type:'BUYER',level:'S',score:92,biz:'B2B内容增长服务',reason:'面向ToB企业做短视频增长，研究与内容策划频率高，团队型使用场景明显。',evidence:3,risk:'可能已有内部AI工作流',demo:'帮它为机械设备客户寻找近期采购意图与内容机会。',scores:[['ICP Fit','24/25'],['Pain','18/20'],['Usage','14/15'],['Existing Spend','13/15'],['Customer Value','9/10'],['Buy-vs-Build','9/10'],['Reachability','5/5']],proof:['公开内容长期覆盖B2B短视频增长。','业务包含客户画像、竞品和选题研究。','存在持续服务企业客户的公开案例。']},
+    {id:3,name:'拓客增长局',type:'BUYER',level:'S',score:90,biz:'企业短视频获客顾问',reason:'以企业获客为核心交付，潜客发现结果能直接转化为服务能力。',evidence:2,risk:'团队规模未知',demo:'直接跑“自动化设备厂家短视频获客需求”研究。',scores:[['ICP Fit','24/25'],['Pain','17/20'],['Usage','13/15'],['Existing Spend','12/15'],['Customer Value','9/10'],['Buy-vs-Build','10/10'],['Reachability','5/5']],proof:['账号定位直接写明“企业短视频获客”。','公开视频重复出现客户线索与转化主题。']},
+    {id:4,name:'制造业增长社',type:'BUYER',level:'A',score:88,biz:'制造业营销服务',reason:'客户价值高、研究需求重复，但公开短视频代运营信号略弱。',evidence:2,risk:'可能更偏咨询而非代运营',demo:'帮它研究制造业客户近期最常出现的获客痛点。',scores:[['ICP Fit','22/25'],['Pain','17/20'],['Usage','13/15'],['Existing Spend','13/15'],['Customer Value','10/10'],['Buy-vs-Build','8/10'],['Reachability','5/5']],proof:['明确服务制造业企业营销。','公开内容包含获客、内容与客户研究。']},
+    {id:5,name:'企服增长研究院',type:'PARTNER',level:'A',score:86,biz:'企业增长咨询',reason:'研究能力强，更适合作为渠道/合作伙伴，而不是第一批直接买家。',evidence:3,risk:'Buy-vs-Build风险高',demo:'联合做一份工业品短视频商机报告。',scores:[['ICP Fit','23/25'],['Pain','14/20'],['Usage','14/15'],['Existing Spend','14/15'],['Customer Value','9/10'],['Buy-vs-Build','7/10'],['Reachability','5/5']],proof:['持续发布企业增长研究内容。','团队具备咨询与数据能力。','可能将 OpportunityRadar 作为交付工具而非单纯内部工具。']},
+    {id:6,name:'AI拓客大师',type:'COMPETITOR',level:'B',score:61,biz:'AI获客软件',reason:'看似高度匹配，但已在提供类似AI获客工具，Buyer Score必须降权。',evidence:3,risk:'直接竞争产品',demo:'不做销售Demo，进入竞品池。',scores:[['ICP Fit','25/25'],['Pain','10/20'],['Usage','15/15'],['Existing Spend','15/15'],['Customer Value','8/10'],['Buy-vs-Build','-15'],['Reachability','3/5']],proof:['公开销售AI获客软件。','功能包含线索筛选与自动化获客。','属于竞品而非典型Buyer。']},
+    {id:7,name:'工业品牌加速器',type:'BUYER',level:'A',score:84,biz:'工业品牌内容服务',reason:'品牌与内容研究需求强，潜客寻找价值中高。',evidence:2,risk:'可能更重品牌而非销售线索',demo:'研究客户行业的真实采购关注点和内容空白。',scores:[['ICP Fit','21/25'],['Pain','16/20'],['Usage','13/15'],['Existing Spend','13/15'],['Customer Value','9/10'],['Buy-vs-Build','8/10'],['Reachability','4/5']],proof:['服务工业品牌内容营销。','多个案例强调竞品与行业研究。']},
+    {id:8,name:'B2B短视频实战营',type:'PARTNER',level:'A',score:82,biz:'B2B短视频培训',reason:'更适合作为渠道或联合案例方，直接内部使用频率低于代运营公司。',evidence:2,risk:'培训业务为主',demo:'把 OpportunityRadar 作为学员行业研究工具。',scores:[['ICP Fit','20/25'],['Pain','13/20'],['Usage','11/15'],['Existing Spend','12/15'],['Customer Value','8/10'],['Buy-vs-Build','9/10'],['Reachability','5/5']],proof:['持续培训B2B短视频获客。','拥有明确的企业学员群体。']}
+  ],
+  deals:[
+    {id:1,name:'鲸跃工业营销',stage:'EVALUATING',score:76,desc:'已看 Demo · 对比飞瓜 / 自己用AI'},
+    {id:2,name:'增长工厂Lab',stage:'INTERESTED',score:58,desc:'已回复 · 愿意拿真实客户场景试一次'},
+    {id:3,name:'拓客增长局',stage:'CONTACTED',score:38,desc:'已首次触达 · 等待回复'}
+  ],
+  activeDeal:1
+};
+
+function openPage(id){
+  state.page=id;
+  $$('.page').forEach(p=>p.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  $$('.nav-btn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  if(id==='opportunities')renderOpportunities();
+  if(id==='sales')renderDeals();
+}
+$$('.nav-btn[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
+
+function toast(title,desc=''){
+  const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${esc(title)}</strong>${desc?`<span>${esc(desc)}</span>`:''}`;
+  $('#toastWrap').appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),220)},2400)
+}
+function loadDemoGoal(){
+  $('#researchGoal').value='帮我寻找最可能购买 OpportunityRadar 的客户，优先寻找服务 B2B、制造业、工业品企业的短视频代运营和企业获客公司。';
+}
+function newResearch(){openPage('agent');$('#researchGoal').focus()}
+function renderPipeline(active=7){
+  $('#pipeline').innerHTML=state.pipeline.map((s,i)=>{
+    const done=i<active, isActive=i===active && active<7;
+    return `<div class="step ${done?'done':''} ${isActive?'active':''}"><div class="n">${done?'✓':i+1}</div><strong>${esc(s[0])}</strong><span>${esc(s[1])}</span></div>`
+  }).join('')
+}
+renderPipeline(7);
+
+function startResearch(){
+  const goal=$('#researchGoal').value.trim();
+  if(!goal)return toast('请输入研究目标');
+  openPage('runs');
+  let step=0;
+  $('#runStatusTag').className='tag purple';$('#runStatusTag').textContent='Agent 正在研究…';
+  ['mQueries','mRaw','mAccounts','mHigh'].forEach(id=>$('#'+id).textContent='—');
+  const timer=setInterval(()=>{
+    renderPipeline(step);
+    step++;
+    if(step===2)$('#mQueries').textContent='18';
+    if(step===4)$('#mRaw').textContent='286';
+    if(step===5)$('#mAccounts').textContent='97';
+    if(step===7){
+      $('#mHigh').textContent='31';
+      clearInterval(timer);renderPipeline(7);
+      $('#runStatusTag').className='tag green';$('#runStatusTag').textContent='已完成 · PASS';
+      toast('研究任务完成','286 条候选 → TOP20');
+    }
+  },420);
+}
+function openRawData(){toast('原始数据视图','V6 原型已展示抽样数据；正式 MVP 将支持完整 JSON/SQLite 查看。')}
+
+function typeClass(type){
+  if(type==='BUYER')return 'green';
+  if(type==='COMPETITOR')return 'red';
+  return 'blue';
+}
+function renderOpportunities(){
+  const q=($('#oppSearch')?.value||'').trim().toLowerCase(), type=$('#oppType')?.value||'', level=$('#oppLevel')?.value||'';
+  const arr=state.opportunities.filter(o=>(!q||[o.name,o.biz,o.reason].join(' ').toLowerCase().includes(q))&&(!type||o.type===type)&&(!level||o.level===level));
+  $('#oppTable').innerHTML=`<thead><tr><th>对象</th><th>分类</th><th>Buyer Score</th><th>为什么值得看</th><th>证据</th><th>动作</th></tr></thead><tbody>${arr.map(o=>`
+    <tr>
+      <td><div class="buyer"><div class="company-avatar">${esc(o.name.slice(0,1))}</div><div><b>${esc(o.name)}</b><div class="muted" style="font-size:9px;margin-top:3px">${esc(o.biz)}</div></div></div></td>
+      <td><span class="tag ${typeClass(o.type)}">${o.type}</span><div style="margin-top:4px"><span class="tag ${o.level==='S'?'pink':o.level==='A'?'purple':'gray'}">${o.level}级</span></div></td>
+      <td><div class="score">${o.score}</div></td>
+      <td><div class="reason">${esc(o.reason)}</div></td>
+      <td>${o.evidence} 条</td>
+      <td><button class="action-link" onclick="openOpportunity(${o.id})">查看证据 →</button></td>
+    </tr>`).join('')}</tbody>`
+}
+function resetOppFilters(){['oppSearch','oppType','oppLevel'].forEach(id=>$('#'+id).value='');renderOpportunities()}
+renderOpportunities();
+
+function openOpportunity(id){
+  const o=state.opportunities.find(x=>x.id===id);
+  $('#drawerTitle').textContent=`${o.name} · ${o.score}`;
+  $('#drawerBody').innerHTML=`
+    <div class="detail"><h4>分类判断</h4><p><span class="tag ${typeClass(o.type)}">${o.type}</span> <span class="tag ${o.level==='S'?'pink':o.level==='A'?'purple':'gray'}">${o.level}级</span><br><br>${esc(o.reason)}</p></div>
+    <div class="detail"><h4>Buyer Score Breakdown</h4><div class="score-grid">${o.scores.map(s=>`<div class="score-item"><span>${esc(s[0])}</span><b>${esc(s[1])}</b></div>`).join('')}</div></div>
+    <div class="detail"><h4>Evidence · 可追溯证据</h4>${o.proof.map((p,i)=>`<div class="evidence"><strong>证据 ${i+1}</strong><p>${esc(p)}</p><a class="source-link" href="javascript:void(0)">查看原始来源 →</a></div>`).join('')}</div>
+    <div class="detail"><h4>主要风险</h4><p>${esc(o.risk)}</p></div>
+    <div class="detail"><h4>推荐 Demo 场景</h4><p>${esc(o.demo)}</p></div>
+    <div class="detail"><h4>首次触达 · 2～4句</h4><div class="outreach"><p>看到你们主要在做${esc(o.biz)}。我们最近做了一个 AI 市场研究 Agent，可以根据目标自动研究短视频市场，把大量内容筛成真正值得联系的客户。如果你愿意，我可以直接拿你们现在服务的一个行业跑一次。</p></div></div>
+    <div class="drawer-actions"><button class="btn primary small" onclick="toast('已复制','首次触达话术已复制')">复制话术</button><button class="btn ghost small" onclick="closeDrawer();openPage('sales')">进入成交助手</button></div>`;
+  $('#drawer').classList.add('show');$('#mask').classList.add('show');
+}
+function closeDrawer(){$('#drawer').classList.remove('show');$('#mask').classList.remove('show')}
+
+function renderDeals(){
+  $('#dealList').innerHTML=state.deals.map(d=>`<div class="deal ${state.activeDeal===d.id?'active':''}" onclick="selectDeal(${d.id})"><strong>${esc(d.name)}</strong><p>${esc(d.desc)}</p><div class="deal-foot"><span class="tag ${d.stage==='EVALUATING'?'orange':d.stage==='INTERESTED'?'purple':'gray'}">${d.stage}</span><b style="font-size:10px">${d.score}</b></div></div>`).join('');
+}
+function selectDeal(id){
+  state.activeDeal=id;renderDeals();
+  const d=state.deals.find(x=>x.id===id);$('#salesTitle').textContent=d.name;$('#salesSub').textContent=`当前阶段：${d.stage}`;$('#dealScore').textContent=`Deal Readiness ${d.score}`;
+}
+renderDeals();
+
+function analyzeReply(){
+  const t=$('#customerReply').value.trim();
+  let intent='继续了解', stage='INTERESTED', obj='需要更多价值证明', action='用客户真实业务跑一次 Demo，不要继续堆功能。', reply='可以，我们直接用你现在的真实业务跑一次。你告诉我你最想找哪类客户，我用结果给你看是否真的有差别。';
+  if(t.includes('飞瓜')||t.includes('自己用AI')){
+    intent='比较替代方案';stage='EVALUATING';obj='差异化不足';
+    action='不要继续堆功能。强调“飞瓜给数据，我们给值得行动的对象”，并邀请用真实行业跑一次对比 Demo。';
+    reply='飞瓜更偏数据分析，我们更偏“直接帮你筛出值得行动的客户”。你给我一个目标客户，我可以直接拿你们真实行业跑一次，对比起来会更直观。';
+  }else if(t.includes('多少钱')||t.includes('价格')||t.includes('收费')){
+    intent='主动询价';stage='PRICING';obj='价格与ROI';
+    action='客户已进入报价阶段。不要一次发太多功能，先确认 Demo 结果是否真的有他会联系的客户，再给 Early Access 价格。';
+    reply='如果刚才这些客户你觉得够准，我们可以直接进入 Early Access。首批价格 499 元/月，主要是希望跟前 10 个真实用户一起把评分做准。';
+  }else if(t.includes('贵')){
+    intent='有兴趣但价格敏感';stage='NEGOTIATION';obj='价格敏感';
+    action='不要立刻降价。先确认使用频率和每月研究任务数量，再判断是否适合 Early Access。';
+    reply='明白。你们现在大概每个月会做多少次行业/客户研究？如果频率不高，我不建议你现在上标准版，我们可以先按 Early Access 场景评估。';
+  }
+  $('#aIntent').textContent=intent;$('#aStage').textContent=stage;$('#aObjection').textContent=obj;$('#nextAction').textContent=action;$('#suggestedReply').textContent=reply;
+  toast('回复已分析',`${stage} · ${obj}`);
+}
+function copyReply(){
+  const text=$('#suggestedReply').textContent;
+  navigator.clipboard?.writeText(text);toast('已复制建议回复');
+}
+$('#globalAsk').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.value.trim()){
+    openPage('sales');$('#customerReply').value=e.target.value.trim();analyzeReply();e.target.value='';
+  }
+});
+</script>
+</body>
+</html>
