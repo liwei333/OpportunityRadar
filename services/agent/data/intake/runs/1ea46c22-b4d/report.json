@@ -1,0 +1,21 @@
+{
+  "run_id": "1ea46c22-b4d",
+  "run_started_at": "2026-09-12T08:14:07.798893+00:00",
+  "run_finished_at": "2026-09-12T08:14:07.800791+00:00",
+  "duration_seconds": 0.0,
+  "rows_received": 3,
+  "valid_rows": 0,
+  "partial_rows": 0,
+  "invalid_rows": 1,
+  "untraceable_rows": 2,
+  "unique_candidates": 3,
+  "duplicate_rows": 0,
+  "cross_query_merged_candidates": 0,
+  "queries_covered": 2,
+  "per_query_candidate_count": {
+    "invalid_query": 1,
+    "no_object_url": 1
+  },
+  "traceable_candidates": 1,
+  "untraceable_candidates": 2
+}

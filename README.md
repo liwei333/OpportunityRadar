@@ -220,18 +220,24 @@ Ranking 按总分降序排列，过滤低分
 
 等级划分：S (90-100), A (80-89), B (65-79), C (<65)
 
-## 当前限制
+## 当前状态
 
-- **当前使用 Mock Platform Adapter**，真实抖音采集器尚未开发
-- **DouyinWebAdapter** 已通过 `NotImplementedError` 预留接口
-- 真实 Douyin Web Collector 将在 Technical Spike 001 中验证
-- 当前 LLM Provider 使用 Mock，未绑定任何模型厂商
+- **Feed 采集**：✅ 已验证 — 可稳定提取真实抖音视频数据（100% 提取成功率，100% URL 可追溯）
+- **关键词搜索**：❌ 未通过 — 抖音反自动化检测阻断，无法稳定搜索
+- **人工辅助采集**：✅ 当前方案 — 人工搜索 + CSV 导入 + 自动标准化去重
+- **DouyinWebAdapter**：已通过 `NotImplementedError` 预留接口
+- **LLM Provider**：当前使用 Mock，未绑定任何模型厂商
+
+## 当前阶段
+
+**OR-SPIKE-001C — Human-assisted Candidate Intake**
+
+- Feed Collector: **PASS**
+- Authenticated Search: **FAIL**（反自动化检测）
+- Human-assisted Intake: **当前开发中**
 
 ## 下一步
 
-完成本框架后，立即进入 **Technical Spike 001**：
+完成 OR-SPIKE-001C 人工采集验证后，进入 **OR-SPIKE-002**：
 
-> 验证抖音 Web 能否通过 Playwright Browser Worker 稳定完成：
-> 关键词搜索 → 批量加载 → 结构化提取视频/账号 → 跨关键词去重
-
-当数据采集黄金链路验证通过后，再进入正式 MVP 工程开发。
+> 真实候选数据 → ICP Filter → Buyer Intelligence → Buyer Score → Evidence → TOP20 → Precision@20

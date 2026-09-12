@@ -7,10 +7,15 @@ account candidates, and data quality reports.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+
+def _utc_now_iso() -> str:
+    """Get current UTC time as ISO string with timezone offset."""
+    return datetime.now(UTC).isoformat()
 
 
 class RawVideoCandidate(BaseModel):
@@ -37,7 +42,7 @@ class RawVideoCandidate(BaseModel):
     source_query: str = ""
     collection_mode: str = "feed"
     source_page_url: str = ""
-    collected_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    collected_at: str = Field(default_factory=_utc_now_iso)
     raw_text: str | None = None
     extraction_method: str = ""
     extraction_success: bool = False
@@ -56,7 +61,7 @@ class RawAccountCandidate(BaseModel):
     following_count_raw: str | None = None
     content_hits: int = 0
     source_queries: list[str] = Field(default_factory=list)
-    collected_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    collected_at: str = Field(default_factory=_utc_now_iso)
     raw_text: str | None = None
 
 

@@ -6,7 +6,7 @@ Calculates quality metrics and generates the DataQualityReport.
 from __future__ import annotations
 
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .models import (
@@ -14,6 +14,11 @@ from .models import (
     NormalizedAccount,
     NormalizedVideo,
 )
+
+
+def _utc_now_iso() -> str:
+    """Get current UTC time as ISO string with timezone offset."""
+    return datetime.now(UTC).isoformat()
 
 
 class QualityAssessor:
@@ -31,7 +36,7 @@ class QualityAssessor:
     def add_error(self, error: str, context: dict[str, Any] | None = None) -> None:
         """Record an error that occurred during collection."""
         self._errors.append({
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": _utc_now_iso(),
             "error": error,
             "context": context or {},
         })
@@ -63,10 +68,10 @@ class QualityAssessor:
         missing_author = sum(1 for v in videos if not v.author_name)
 
         return DataQualityReport(
-            run_started_at=datetime.fromtimestamp(
-                self._start_time if self._start_time else time.time()
+            run_started_at=_utc_now_iso() if self._start_time == 0 else datetime.fromtimestamp(
+                self._start_time, tz=UTC
             ).isoformat(),
-            run_finished_at=datetime.utcnow().isoformat(),
+            run_finished_at=_utc_now_iso(),
             duration_seconds=round(duration, 2),
             queries_requested=len(queries),
             queries_completed=len(queries_completed),

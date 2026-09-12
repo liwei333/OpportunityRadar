@@ -22,7 +22,7 @@ from typing import Any
 
 from playwright.async_api import async_playwright
 
-from .douyin_selectors import DouyinUrls
+from .douyin_selectors import DouyinSearchDetector, DouyinUrls
 from .extractors import DouyinExtractor
 from .models import (
     DataQualityReport,
@@ -265,7 +265,7 @@ class DouyinCollector:
                     except Exception:
                         pass
 
-        # Final check
+        # Final check - verify search results are loaded
         results_loaded = await self._check_search_results_loaded(page)
         if not results_loaded:
             logger.warning("Search results did not load for query: %s", query)
@@ -275,30 +275,49 @@ class DouyinCollector:
                 await page.screenshot(path=str(screenshot_path), full_page=False)
             return videos
 
-        # Scroll and extract
+        # Verify we're still on the search page (not redirected to profile, etc.)
+        current_url = page.url
+        if "/search/" not in current_url:
+            logger.warning(
+                "Page navigated away from search to: %s", current_url
+            )
+            return videos
+
+        # Capture the search page URL for provenance
+        source_page_url = current_url
+
+        # Scroll and extract (with search provenance)
         videos = await self._scroll_and_extract(
-            page, extractor, query, limit, max_scrolls
+            page, extractor, query, limit, max_scrolls,
+            collection_mode="search",
+            source_page_url=source_page_url,
         )
+
+        # Post-extraction validation: ensure videos have search provenance
+        for v in videos:
+            if v.collection_mode != "search":
+                logger.warning(
+                    "Video extracted with wrong collection_mode: %s",
+                    v.collection_mode,
+                )
 
         return videos
 
     async def _check_search_results_loaded(self, page: Any) -> bool:
-        """Check if search results have actually loaded."""
-        result = await page.evaluate("""() => {
+        """Check if search results have actually loaded.
+
+        Strict detection: requires actual search-result-card elements.
+        Login overlay, captcha, and empty page shells do NOT count as loaded.
+        """
+        counts = await page.evaluate("""() => {
             const cards = document.querySelectorAll('[class*="search-result-card"]');
-            if (cards.length > 0) return true;
-
-            // Also check for video links
             const videoLinks = document.querySelectorAll('[href*="/video/"]');
-            if (videoLinks.length > 0) return true;
-
-            // Check body text length (results page has much more text)
-            const bodyText = document.body?.innerText || '';
-            if (bodyText.length > 1000) return true;
-
-            return false;
+            return { cards: cards.length, videoLinks: videoLinks.length };
         }""")
-        return result
+        return DouyinSearchDetector.is_search_results_loaded(
+            counts.get("cards", 0),
+            counts.get("videoLinks", 0),
+        )
 
     async def _collect_from_feed(
         self,
@@ -322,9 +341,12 @@ class DouyinCollector:
             await page.keyboard.press("Escape")
             await asyncio.sleep(2)
 
-        # Extract initial feed content
+        # Extract initial feed content (with feed provenance)
+        source_page_url = page.url
         feed_videos = await extractor.extract_videos_from_feed(
-            source_query=queries[0] if queries else "feed"
+            source_query=queries[0] if queries else "feed",
+            collection_mode="feed",
+            source_page_url=source_page_url,
         )
         videos.extend(feed_videos)
 
@@ -339,7 +361,9 @@ class DouyinCollector:
 
             # Extract new content
             new_videos = await extractor.extract_videos_from_feed(
-                source_query=queries[0] if queries else "feed"
+                source_query=queries[0] if queries else "feed",
+                collection_mode="feed",
+                source_page_url=page.url,
             )
 
             # Only add new unique videos
@@ -361,6 +385,8 @@ class DouyinCollector:
         query: str,
         limit: int,
         max_scrolls: int,
+        collection_mode: str = "search",
+        source_page_url: str = "",
     ) -> list[RawVideoCandidate]:
         """Scroll a page and extract video data."""
         videos: list[RawVideoCandidate] = []
@@ -371,7 +397,9 @@ class DouyinCollector:
 
             # Extract current content
             new_videos = await extractor.extract_videos_from_feed(
-                source_query=query
+                source_query=query,
+                collection_mode=collection_mode,
+                source_page_url=source_page_url,
             )
 
             # Add unique videos

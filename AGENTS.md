@@ -65,21 +65,34 @@ AI Agent MUST NOT 擅自扩大当前阶段范围。
 
 ### 当前 Gate
 
-**OR-SPIKE-001 — Douyin Web Real Data Collector**
+**OR-SPIKE-001C — Human-assisted Candidate Intake**
 
-目标：验证抖音 Web 能否通过 Playwright Browser Worker 稳定完成：
+Roadmap Decision（已确认）：
+```
+OR-SPIKE-001A Feed Collector = PASS
+OR-SPIKE-001B Authenticated Douyin Search = FAIL
+OR-SPIKE-001 Overall = CONDITIONAL PASS
+```
+
+当前目标：建立最小、可靠、可追溯的人工辅助真实候选数据入口。
 
 ```
-关键词搜索 → 批量加载 → 结构化提取视频/账号 → 跨关键词去重
+人工搜索 + CSV 导入
+    ↓
+Schema Validation → Normalize → Deduplicate → Quality Report
+    ↓
+Candidate Dataset
 ```
 
 ### Gate 流转规则
 
 ```
-OR-SPIKE-001 PASS
+OR-SPIKE-001C PASS
+（≥10 Queries, ≥100 Unique Candidates,
+ Traceable Rate ≥90%, Human Relevance Rate ≥70%）
     ↓
-OR-SPIKE-002: 真实候选 → ICP Filter → BUYER/COMPETITOR/PARTNER
-    → Buyer Score → Evidence → TOP20 → Precision@20
+OR-SPIKE-002: ICP Filter → Buyer Intelligence → Buyer Score
+    → Evidence → TOP20 → Precision@20
     ↓
 Precision@20 >= 70%
     ↓
@@ -87,6 +100,15 @@ Precision@20 >= 70%
     ↓
 ≥1 个真实 ¥499 Early Access 付费客户
 ```
+
+### 数据来源说明
+
+V0 允许以下 Candidate 获取方式：
+- Human-assisted Douyin Search（人工搜索 + CSV 导入）
+- Automated Feed Collector（已验证可用）
+- Manual URL Import（手动 URL 导入）
+
+进入 Intelligence 的 Candidate 必须满足统一 Provenance Gate。
 
 Agent MUST NOT 跳过当前 Gate，MUST NOT 提前实现后续阶段功能。
 

@@ -168,6 +168,40 @@ class DouyinSelectors:
     ]
 
 
+class DouyinSearchDetector:
+    """Pure functions for detecting search page state.
+
+    These are separated from the extractor so they can be unit tested
+    without a browser.
+    """
+
+    @staticmethod
+    def is_search_results_loaded(
+        search_result_cards: int,
+        video_links: int,
+    ) -> bool:
+        """Strict detection: search results are loaded only if actual
+        result cards or video links are present.
+
+        Login overlay, captcha, and empty page shells return False.
+        """
+        # Must have actual search result cards
+        if search_result_cards > 0:
+            return True
+        # Must have video links (feed mode)
+        return video_links > 0
+
+    @staticmethod
+    def is_login_overlay_present(body_text: str) -> bool:
+        """Check if the search page login overlay is present."""
+        return "登录后即可搜索更多精彩视频" in body_text
+
+    @staticmethod
+    def is_captcha_present(captcha_elements: int) -> bool:
+        """Check if a captcha overlay is blocking interaction."""
+        return captcha_elements > 0
+
+
 class DouyinUrls:
     """URL patterns for Douyin Web."""
 

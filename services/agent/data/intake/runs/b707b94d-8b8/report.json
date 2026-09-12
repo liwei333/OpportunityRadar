@@ -1,0 +1,22 @@
+{
+  "run_id": "b707b94d-8b8",
+  "run_started_at": "2026-09-12T08:13:27.880527+00:00",
+  "run_finished_at": "2026-09-12T08:13:27.882372+00:00",
+  "duration_seconds": 0.0,
+  "rows_received": 3,
+  "valid_rows": 3,
+  "partial_rows": 0,
+  "invalid_rows": 0,
+  "untraceable_rows": 0,
+  "unique_candidates": 3,
+  "duplicate_rows": 0,
+  "cross_query_merged_candidates": 0,
+  "queries_covered": 3,
+  "per_query_candidate_count": {
+    "短视频代运营": 1,
+    "企业短视频获客": 1,
+    "工业品短视频": 1
+  },
+  "traceable_candidates": 3,
+  "untraceable_candidates": 0
+}

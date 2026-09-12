@@ -36,6 +36,11 @@ services/agent/data/opportunity_radar.db*
 services/agent/data/browser_profile/
 services/data/browser_profile/
 
+# Spike run outputs (raw data, screenshots, diagnostics)
+services/agent/data/spikes/
+services/agent/spikes/or_spike_001/_diagnose/
+services/agent/spikes/or_spike_001/_explore/
+
 # Node
 node_modules/
 dist/

@@ -61,7 +61,9 @@ class DouyinExtractor:
         # Strategy 2: Extract from feed card elements with href attributes
         if not videos:
             videos.extend(
-                await self._extract_from_feed_cards(source_query)
+                await self._extract_from_feed_cards(
+                    source_query, collection_mode, source_page_url
+                )
             )
 
         # Strategy 3: Parse body text for video card patterns
@@ -71,7 +73,7 @@ class DouyinExtractor:
             )
             if body_text:
                 videos.extend(
-                    self._parse_feed_text(body_text, source_query)
+                    self._parse_feed_text(body_text, source_query, collection_mode)
                 )
 
         # Strategy 4: Try structured DOM selectors
@@ -194,6 +196,8 @@ class DouyinExtractor:
             duration=duration,
             published_at=date,
             source_query=source_query,
+            collection_mode="search",
+            source_page_url=source_page_url,
             raw_text=card_text[:500],
             extraction_method="search_result_card",
             extraction_success=bool(title and author),
@@ -202,6 +206,8 @@ class DouyinExtractor:
     async def _extract_from_feed_cards(
         self,
         source_query: str,
+        collection_mode: str = "feed",
+        source_page_url: str = "",
     ) -> list[RawVideoCandidate]:
         """Extract videos from feed card elements.
 
@@ -241,7 +247,7 @@ class DouyinExtractor:
         }""")
 
         for card in cards:
-            video = self._parse_feed_card(card, source_query)
+            video = self._parse_feed_card(card, source_query, collection_mode, source_page_url)
             if video:
                 videos.append(video)
 
@@ -251,6 +257,8 @@ class DouyinExtractor:
         self,
         card: dict[str, Any],
         source_query: str,
+        collection_mode: str = "feed",
+        source_page_url: str = "",
     ) -> RawVideoCandidate | None:
         """Parse a single feed card into a RawVideoCandidate.
 
@@ -336,6 +344,8 @@ class DouyinExtractor:
             duration=duration,
             published_at=date,
             source_query=source_query,
+            collection_mode=collection_mode,
+            source_page_url=source_page_url,
             raw_text=text[:500],
             extraction_method="feed_card_href",
             extraction_success=bool(title and author),
@@ -345,6 +355,7 @@ class DouyinExtractor:
         self,
         body_text: str,
         source_query: str,
+        collection_mode: str = "feed",
     ) -> list[RawVideoCandidate]:
         """Parse video data from feed text content.
 
@@ -424,6 +435,7 @@ class DouyinExtractor:
                         duration=duration,
                         published_at=date,
                         source_query=source_query,
+                        collection_mode=collection_mode,
                         raw_text="\n".join(lines[i:j]),
                         extraction_method="feed_text_parse",
                         extraction_success=bool(title and author),

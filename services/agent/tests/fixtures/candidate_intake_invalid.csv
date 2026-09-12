@@ -1,0 +1,4 @@
+source_query,account_name,profile_url,video_title,video_url,evidence_text,evidence_url,source_page_url,captured_at,human_note
+,NoQueryUser,https://www.douyin.com/user/nquery,,,没有关键词,,https://www.douyin.com/search/xxx,,Missing query
+invalid_query,BadUrlUser,not-a-valid-url,,,无效URL,,https://www.douyin.com/search/xxx,,Invalid URL
+no_object_url,SomeUser,,,,没有对象级URL,,https://www.douyin.com/search/xxx,,Only search page URL

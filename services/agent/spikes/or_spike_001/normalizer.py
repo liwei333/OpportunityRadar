@@ -134,8 +134,14 @@ def normalize_video(raw: RawVideoCandidate) -> NormalizedVideo:
     title = normalize_text(raw.title)
     author = normalize_text(raw.author_name)
 
-    # Generate dedup key
-    dedup_key = _make_video_dedup_key(raw.video_id, video_url)
+    # Generate dedup key (with search fallback)
+    dedup_key = _make_video_dedup_key(
+        video_id=raw.video_id,
+        video_url=video_url,
+        collection_mode=raw.collection_mode,
+        title=title,
+        author_name=author,
+    )
 
     return NormalizedVideo(
         id=raw.id,
@@ -192,10 +198,13 @@ def normalize_account(raw: RawAccountCandidate) -> NormalizedAccount:
 def _make_video_dedup_key(
     video_id: str | None,
     video_url: str | None,
+    collection_mode: str = "feed",
+    title: str | None = None,
+    author_name: str | None = None,
 ) -> str:
     """Generate dedup key for a video.
 
-    Priority: video_id > normalized URL > empty.
+    Priority: video_id > normalized URL > search fallback.
     """
     if video_id:
         return f"douyin::video::{video_id}"
@@ -205,6 +214,14 @@ def _make_video_dedup_key(
         if match:
             return f"douyin::video::{match.group(1)}"
         return f"douyin::url::{video_url}"
+
+    # Search mode fallback: use normalized title + author
+    # This is NOT stable video identity - it's a best-effort dedup
+    if collection_mode == "search" and title and author_name:
+        normalized_title = title.strip().lower()[:80]
+        normalized_author = author_name.strip().lower()
+        return f"douyin::search_fallback::{normalized_author}::{normalized_title}"
+
     return ""
 
 

@@ -1,0 +1,4 @@
+source_query,status,errors
+,invalid,Missing required field: source_query
+invalid_query,untraceable,Invalid profile_url: not-a-valid-url
+no_object_url,untraceable,

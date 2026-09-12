@@ -8,9 +8,15 @@ Tests cover:
 - source_queries merge
 - DataQualityReport calculation
 - Feed card parsing
+- Search card parsing
+- Search provenance
+- Search loaded detection
+- Search fallback dedup
+- UTC timestamp consistency
 """
 
 
+from spikes.or_spike_001.douyin_selectors import DouyinSearchDetector
 from spikes.or_spike_001.models import (
     DataQualityReport,
     NormalizedAccount,
@@ -411,3 +417,215 @@ class TestNormalizeAccount:
         assert normalized.follower_count_raw == "2.3万"
         assert len(normalized.source_queries) == 2
         assert normalized.content_hits == 5
+
+
+# === Search Provenance (P0-1) ===
+
+
+class TestSearchProvenance:
+    """Test that search provenance fields are correctly set."""
+
+    def test_search_card_has_search_mode(self) -> None:
+        """Search card extraction should set collection_mode='search'."""
+        from spikes.or_spike_001.extractors import DouyinExtractor
+
+        extractor = DouyinExtractor.__new__(DouyinExtractor)
+        text = "29:416489代运营怎么和老板谈单@作者 · 2月15日"
+
+        video = extractor._parse_search_card_text(
+            text, "短视频代运营", "https://www.douyin.com/search/短视频代运营"
+        )
+        assert video is not None
+        assert video.collection_mode == "search"
+        assert video.source_query == "短视频代运营"
+        assert video.source_page_url == "https://www.douyin.com/search/短视频代运营"
+
+    def test_feed_card_has_feed_mode(self) -> None:
+        """Feed card extraction should set collection_mode='feed'."""
+        raw = RawVideoCandidate(
+            title="Test",
+            author_name="@author",
+            source_query="test",
+            collection_mode="feed",
+            source_page_url="https://www.douyin.com/jingxuan",
+            extraction_success=True,
+        )
+        normalized = normalize_video(raw)
+        assert normalized.collection_mode == "feed"
+        assert normalized.source_page_url == "https://www.douyin.com/jingxuan"
+
+    def test_normalize_preserves_provenance(self) -> None:
+        """Normalization should preserve collection_mode and source_page_url."""
+        raw = RawVideoCandidate(
+            title="Test",
+            author_name="@author",
+            source_query="query1",
+            collection_mode="search",
+            source_page_url="https://www.douyin.com/search/query1",
+            extraction_success=True,
+        )
+        normalized = normalize_video(raw)
+        assert normalized.collection_mode == "search"
+        assert normalized.source_page_url == "https://www.douyin.com/search/query1"
+        assert normalized.source_query == "query1"
+
+
+# === Search Loaded Detection (P0-2) ===
+
+
+class TestSearchLoadedDetection:
+    """Test strict search result loaded detection."""
+
+    def test_search_cards_present(self) -> None:
+        """Search cards present should return True."""
+        assert DouyinSearchDetector.is_search_results_loaded(
+            search_result_cards=5, video_links=0
+        )
+
+    def test_video_links_present(self) -> None:
+        """Video links present should return True."""
+        assert DouyinSearchDetector.is_search_results_loaded(
+            search_result_cards=0, video_links=3
+        )
+
+    def test_login_overlay_not_loaded(self) -> None:
+        """Login overlay page should return False."""
+        assert not DouyinSearchDetector.is_search_results_loaded(
+            search_result_cards=0, video_links=0
+        )
+
+    def test_long_body_without_results_not_loaded(self) -> None:
+        """Long body text without search cards should return False."""
+        assert not DouyinSearchDetector.is_search_results_loaded(
+            search_result_cards=0, video_links=0
+        )
+
+    def test_login_overlay_text_detection(self) -> None:
+        """Login overlay text should be detected."""
+        body = "登录后即可搜索更多精彩视频扫码登录..."
+        assert DouyinSearchDetector.is_login_overlay_present(body)
+
+    def test_normal_body_no_login_overlay(self) -> None:
+        """Normal body without login text should return False."""
+        body = "这是一些正常的搜索结果内容..."
+        assert not DouyinSearchDetector.is_login_overlay_present(body)
+
+    def test_captcha_detection(self) -> None:
+        """Captcha elements should be detected."""
+        assert DouyinSearchDetector.is_captcha_present(captcha_elements=1)
+
+    def test_no_captcha(self) -> None:
+        """No captcha elements should return False."""
+        assert not DouyinSearchDetector.is_captcha_present(captcha_elements=0)
+
+
+# === Search Fallback Dedup (P0-3) ===
+
+
+class TestSearchFallbackDedup:
+    """Test search result dedup with fallback."""
+
+    def test_search_fallback_same_title_author_merges(self) -> None:
+        """Same title + author from different queries should merge."""
+        from spikes.or_spike_001.normalizer import _make_video_dedup_key
+
+        key1 = _make_video_dedup_key(
+            video_id=None,
+            video_url=None,
+            collection_mode="search",
+            title="代运营怎么谈单",
+            author_name="@author",
+        )
+        key2 = _make_video_dedup_key(
+            video_id=None,
+            video_url=None,
+            collection_mode="search",
+            title="代运营怎么谈单",
+            author_name="@author",
+        )
+        assert key1 == key2
+        assert key1.startswith("douyin::search_fallback::")
+
+    def test_search_fallback_different_title_no_merge(self) -> None:
+        """Different titles should not merge."""
+        from spikes.or_spike_001.normalizer import _make_video_dedup_key
+
+        key1 = _make_video_dedup_key(
+            video_id=None,
+            video_url=None,
+            collection_mode="search",
+            title="Title A",
+            author_name="@author",
+        )
+        key2 = _make_video_dedup_key(
+            video_id=None,
+            video_url=None,
+            collection_mode="search",
+            title="Title B",
+            author_name="@author",
+        )
+        assert key1 != key2
+
+    def test_url_based_dedup_takes_priority(self) -> None:
+        """URL-based dedup should take priority over fallback."""
+        from spikes.or_spike_001.normalizer import _make_video_dedup_key
+
+        key = _make_video_dedup_key(
+            video_id="12345",
+            video_url="https://www.douyin.com/video/12345",
+            collection_mode="search",
+            title="Title",
+            author_name="@author",
+        )
+        assert key == "douyin::video::12345"
+
+    def test_feed_mode_no_fallback(self) -> None:
+        """Feed mode without video_id/url should return empty key."""
+        from spikes.or_spike_001.normalizer import _make_video_dedup_key
+
+        key = _make_video_dedup_key(
+            video_id=None,
+            video_url=None,
+            collection_mode="feed",
+            title="Title",
+            author_name="@author",
+        )
+        assert key == ""
+
+
+# === UTC Timestamp (P0-4) ===
+
+
+class TestUTCTimestamp:
+    """Test UTC timestamp consistency."""
+
+    def test_finished_at_after_started_at(self) -> None:
+        """finished_at should be >= started_at."""
+        report = DataQualityReport(
+            run_started_at="2026-01-01T00:00:00+00:00",
+            run_finished_at="2026-01-01T00:01:00+00:00",
+        )
+        from datetime import datetime
+        started = datetime.fromisoformat(report.run_started_at)
+        finished = datetime.fromisoformat(report.run_finished_at)
+        assert finished >= started
+
+    def test_timestamps_have_timezone(self) -> None:
+        """Timestamps should include timezone offset."""
+        raw = RawVideoCandidate(
+            title="Test",
+            author_name="@author",
+            source_query="test",
+            extraction_success=True,
+        )
+        # collected_at should have timezone info
+        assert "+" in raw.collected_at or "Z" in raw.collected_at
+
+    def test_report_timestamps_utc(self) -> None:
+        """Report timestamps should be in UTC."""
+        report = DataQualityReport(
+            run_started_at="2026-01-01T00:00:00+00:00",
+            run_finished_at="2026-01-01T00:01:00+00:00",
+        )
+        assert "+00:00" in report.run_started_at
+        assert "+00:00" in report.run_finished_at

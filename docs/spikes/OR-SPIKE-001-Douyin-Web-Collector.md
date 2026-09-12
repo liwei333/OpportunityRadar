@@ -345,7 +345,7 @@ During one diagnostic run (before captcha/rate-limiting), **18 real search resul
 | 5 | 08:51 | 1439 | 代运营0-100全流程 | @宝藏十一（编导培训） | 6月21日 |
 | ... | ... | ... | ... | ... | ... |
 
-**Relevance assessment**: All 18 results are directly relevant to "短视频代运营" (short video agency operations), confirming that Douyin search returns keyword-relevant results.
+**Preliminary relevance assessment**: 18 diagnostic results appear strongly related to "短视频代运营" on preliminary inspection (titles contain 代运营/短视频运营 keywords). However, formal relevance confirmation remains **PENDING HUMAN REVIEW** (see `review_search_relevance.csv`).
 
 ### Search Result DOM Structure
 
@@ -422,4 +422,4 @@ The Douyin Web Collector can:
 - ⚠️ Search requires login (correctly detected but not autonomously completable)
 - ⚠️ Search result rendering is inconsistent (sometimes works, sometimes requires login)
 
-**Next step**: OR-SPIKE-001B validation with human login, then OR-SPIKE-0012 if successful.
+**Next step**: OR-SPIKE-001B validation with human login, then OR-SPIKE-002 if successful.
